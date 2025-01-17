@@ -1,0 +1,165 @@
+openapi: '3.0.3'
+
+info:
+  title: CityBus API
+  version: '1.0'
+
+servers:
+  - url: 127.0.0.1:3001
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    400BadRequest:
+      description: Request not valid
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessageResponse"
+    401Unauthorized:
+      description: Client not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessageResponse"
+    403Forbidden:
+      description: Client not allowed to access resource
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessageResponse"
+    404NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessageResponse"
+    500InternalServerError:
+      description: An error occurred inside the server
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessageResponse"
+  schemas:
+    MessageResponse:
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+tags:
+  - name: authentication
+    description: Manage users' authentication
+
+paths:
+  /auth/session:
+    post:
+      summary: Authenticate user and create new session
+      tags:
+        - authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - email
+                - password
+      responses:
+        '201':
+          description: JSON containing user's informations, JWT and renew token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  firstName:
+                    type: string
+                  lastName:
+                    type: string
+                  email:
+                    type: string
+                  jwt:
+                    type: string
+                  renewToken:
+                    type: string
+                required:
+                  - firstName
+                  - lastName
+                  - email
+                  - jwt
+                  - renewToken
+        '400':
+          $ref: "#/components/responses/400BadRequest"
+        '401':
+          $ref: "##/components/responses/401Unauthorized"
+    put:
+      summary: Renew current session and receive new tokens
+      tags:
+        - authentication
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                renewToken:
+                  type: string
+              required:
+                - renewToken
+      responses:
+        '200':
+          description: JSON containing new JWT and renew token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jwt:
+                    type: string
+                  renewToken:
+                    type: string
+                required:
+                  - jwt
+                  - renewToken
+
+  /auth/password:
+    put:
+      summary: Update user's password
+      tags:
+        - authentication
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                oldPassword:
+                  type: string
+                newPassword:
+                  type: string
+              required:
+                - oldPassword
+                - newPassword
+      responses:
+        "200":
+          description: Password changed successfully
+        "403":
+          $ref: "#/components/responses/403Forbidden"
