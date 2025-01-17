@@ -1,0 +1,21 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
+{
+	"name": "Node.js",
+	"dockerComposeFile": "docker-compose.yaml",
+	"service": "dev",
+	"remoteUser": "node",
+	"workspaceFolder": "/code",
+	"updateRemoteUserUID": true,
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-azuretools.vscode-docker",
+				"Vue.volar",
+				"42Crunch.vscode-openapi",
+				"mongodb.mongodb-vscode"
+			]
+		}
+	},
+	"postCreateCommand": "npm install --prefix ${containerWorkspaceFolder}/api"
+}

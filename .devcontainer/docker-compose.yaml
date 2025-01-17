@@ -1,0 +1,29 @@
+services:
+  dev:
+    build:
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ../:/code
+    entrypoint: /bin/bash
+    tty: true
+
+  mongo:
+    image: mongo:8
+    restart: unless-stopped
+    volumes:
+      - ./mongo:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+
+  express:
+    image: mongo-express:1.0.2-20
+    restart: unless-stopped
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_URL: mongodb://root:password@mongo:27017/
+      ME_CONFIG_BASICAUTH: false
