@@ -51,10 +51,22 @@ components:
           type: string
       required:
         - message
+    User:
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
 
 tags:
   - name: authentication
     description: Manage users' authentication
+  - name: user
+    description: User profile management
 
 paths:
   /auth/session:
@@ -84,32 +96,23 @@ paths:
               schema:
                 type: object
                 properties:
-                  firstName:
-                    type: string
-                  lastName:
-                    type: string
-                  email:
-                    type: string
                   jwt:
                     type: string
                   renewToken:
                     type: string
                 required:
-                  - firstName
-                  - lastName
-                  - email
                   - jwt
                   - renewToken
         '400':
           $ref: "#/components/responses/400BadRequest"
         '401':
           $ref: "##/components/responses/401Unauthorized"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
     put:
       summary: Renew current session and receive new tokens
       tags:
         - authentication
-      security:
-        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -136,6 +139,8 @@ paths:
                 required:
                   - jwt
                   - renewToken
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
 
   /auth/password:
     put:
@@ -163,3 +168,53 @@ paths:
           description: Password changed successfully
         "403":
           $ref: "#/components/responses/403Forbidden"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
+
+  /user:
+    get:
+      summary: Get logged user's informations
+      tags:
+        - user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: JSON containing user informations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
+    put:
+      summary: Update user's informations
+      tags:
+        - user
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+              required:
+                - firstName
+                - lastName
+      responses:
+        '200':
+          description: User updated
+        '400':
+          $ref: "#/components/responses/400BadRequest"
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
