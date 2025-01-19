@@ -1,3 +1,9 @@
+networks:
+  default:
+    driver: bridge
+  osrm-backend:
+    internal: true
+
 services:
   dev:
     build:
@@ -7,6 +13,8 @@ services:
       - ../:/code
     entrypoint: /bin/bash
     tty: true
+    networks:
+        - default
 
   mongo:
     image: mongo:8
@@ -16,6 +24,8 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: password
+    networks:
+      - default
 
   express:
     image: mongo-express:1.0.2-20
@@ -27,3 +37,30 @@ services:
       ME_CONFIG_MONGODB_ADMINPASSWORD: password
       ME_CONFIG_MONGODB_URL: mongodb://root:password@mongo:27017/
       ME_CONFIG_BASICAUTH: false
+    networks:
+      - default
+
+  osrm:
+    image: nginx:1.27
+    restart: unless-stopped
+    volumes:
+      - ./nginx-osrm.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - default
+      - osrm-backend
+  osrm-foot-backend:
+    image: osrm/osrm-backend
+    restart: unless-stopped
+    entrypoint: osrm-routed --algorithm mld --port 80 --ip 0.0.0.0 /data/osrm/foot/data.osrm
+    volumes:
+      - ./osrm:/data/osrm
+    networks:
+      - osrm-backend
+  osrm-car-backend:
+    image: osrm/osrm-backend
+    restart: unless-stopped
+    entrypoint: osrm-routed --algorithm mld --port 80 --ip 0.0.0.0 /data/osrm/car/data.osrm
+    volumes:
+      - ./osrm:/data/osrm
+    networks:
+      - osrm-backend
