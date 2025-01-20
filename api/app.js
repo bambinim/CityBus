@@ -9,7 +9,7 @@ const Logger  = logging.Logger;
 
 async function connectToMongo() {
     try {
-        await mongoose.createConnection(config.MONGODB_URL)
+        await mongoose.connect(config.MONGODB_URL)
         Logger.info("Successfully connected to MongoDB")
     } catch (error) {
         Logger.error(`Failed to connecto to MongoDB: ${error}`)
@@ -17,10 +17,20 @@ async function connectToMongo() {
     }
 }
 
+function createCollections() {
+    Logger.info("Creating collections");
+    require("./database");
+}
+
+function routerSetup() {
+    const router = require("./routes");
+    app.use(router, '/');
+}
+
 async function runDevelopmentServer() {
     Logger.info("Starting development server")
     await connectToMongo();
-    const db = require("./database");
+    createCollections();
     const fs = require("fs");
     const YAML = require("yaml");
     const swaggerUi = require("swagger-ui-express");
