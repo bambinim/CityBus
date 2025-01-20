@@ -11,7 +11,8 @@
             "runtimeExecutable": "nodemon",
             "cwd": "${workspaceFolder}/api",
             "program": "app.js",
-            "restart": true
+            "restart": true,
+            "outputCapture": "std"
         }
     ]
 }

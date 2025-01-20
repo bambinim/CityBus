@@ -1,4 +1,5 @@
-import mongoose, { Schema, SchemaType } from "mongoose";
+const mongoose = require("mongoose")
+const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
     _id: Schema.Types.ObjectId,
@@ -14,7 +15,7 @@ const userSchema = new Schema({
 const renewTokenSchema = new Schema({
     _id: Schema.Types.ObjectId,
     token: {type: String, required: true},
-    userId: {type: Schema.Types.ObjectId, required: true, ref: User}
+    userId: {type: Schema.Types.ObjectId, required: true, ref: "User"}
 });
 
 const pointSchema = new Schema({
@@ -34,10 +35,12 @@ const directionSchema = new Schema({
     _id: Schema.Types.ObjectId,
     name: {type: String, required: true},
     stops: {type: [new Schema({
-        stopId: {type: Schema.Types.ObjectId, required: true, ref: BusStop},
+        stopId: {type: Schema.Types.ObjectId, required: true, ref: "BusStop"},
+        name: {type: String, required: true},
         routeToNext: {type: [routeStepSchema], required: true, default: undefined},
         timeToNext: {type: Number, required: true}
-    })], required: true, default: undefined}
+    })], required: true, default: undefined},
+    timetable: {type: [[Number]], required: true, default: undefined}
 });
 
 const busLineSchema = new Schema({
@@ -51,15 +54,15 @@ const busStopSchema = new Schema({
     _id: Schema.Types.ObjectId,
     name: {type: String, required: true},
     location: {type: pointSchema, required: true},
-    connectedLineDirections: {type: [{type: Schema.Types.ObjectId, ref: BusLine.directions}], required: false, default: []}
+    connectedLineDirections: {type: [{type: Schema.Types.ObjectId, ref: "BusLine.directions"}], required: false, default: []}
 });
 
 const busRideSchema = new Schema({
     _id: Schema.Types.ObjectId,
-    directionId: {type: Schema.Types.ObjectId, required: true, ref: BusLine.directions},
+    directionId: {type: Schema.Types.ObjectId, required: true, ref: "BusLine.directions"},
     status: {type: String, required: true, enum: ["running", "finished"]},
     stops: {type: [new Schema({
-        stopId: {type: Schema.Types.ObjectId, required: true, ref: BusStop},
+        stopId: {type: Schema.Types.ObjectId, required: true, ref: "BusStop"},
         name: {type: String, required: true},
         expectedArrivalTimestamp: {type: Number},
         isBusPassed: {type: Boolean, default: false}
@@ -70,10 +73,13 @@ const BusLine = mongoose.model("BusLine", busLineSchema);
 const BusStop = mongoose.model("BusStop", busStopSchema);
 const BusRide = mongoose.model("BusRun", busRideSchema)
 const User = mongoose.model("User", userSchema);
+const RenewToken = mongoose.model("RenewToken", renewTokenSchema);
+
 
 module.exports = {
     BusLine: BusLine,
     BusStop: BusStop,
     BusRide: BusRide,
-    User: User
+    User: User,
+    RenewToken: RenewToken,
 }
