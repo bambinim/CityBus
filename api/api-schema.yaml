@@ -46,12 +46,14 @@ components:
             $ref: "#/components/schemas/MessageResponse"
   schemas:
     MessageResponse:
+      type: object
       properties:
         message:
           type: string
       required:
         - message
     User:
+      type: object
       properties:
         firstName:
           type: string
@@ -61,12 +63,91 @@ components:
           type: string
         role:
           type: string
+    GeoJSONLineString:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - LineString
+        coordinates:
+          type: array
+          example: [30.140484, -9.156697]
+          items:
+            type: array
+            minLength: 2
+            maxLength: 2
+            items:
+              type: number
+    RouteStep:
+      type: object
+      properties:
+        duration:
+          type: number
+        geometry:
+          type: array
+          items:
+            $ref: "#/components/schemas/GeoJSONLineString"
+    RouteLeg:
+      type: object
+      properties:
+        duration:
+          type: number
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/RouteStep"
+    NavigationFootLeg:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - foor
+        duration:
+          type: number
+        departureTimestamp:
+          type: number
+        arrivalTimestamp:
+          type: number
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/GeoJSONLineString"
+    NavigationBusLeg:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - "bus"
+        duration:
+          type: number
+        departureTimestamp:
+          type: number
+        arrivalTimestamp:
+          type: number
+        stops:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              timeToNext:
+                type: number
+              routeToNext:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeoJSONLineString"
 
 tags:
   - name: authentication
-    description: Manage users' authentication
+    description: Users' authentication
   - name: user
-    description: User profile management
+    description: User profile
+  - name: routes
+    description: Routing engine interface
 
 paths:
   /auth/session:
@@ -141,7 +222,6 @@ paths:
                   - renewToken
         '401':
           $ref: "#/components/responses/401Unauthorized"
-
   /auth/password:
     put:
       summary: Update user's password
@@ -218,3 +298,69 @@ paths:
           $ref: "#/components/responses/401Unauthorized"
         '500':
           $ref: "#/components/responses/500InternalServerError"
+
+  /routes/busline:
+    get:
+      summary: Generate route for a new bus line using specified coordinates as stops
+      tags:
+        - routes
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: stops
+          schema:
+            type: string
+          description: List of stops coordinates in format longitude,latitude separated by ;
+          required: true
+      responses:
+        '200':
+          description: Return an array where each element is the route between one stop and the next one; array elements order is based on stops order in request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RouteLeg"
+        '400':
+          $ref: "#/components/responses/400BadRequest"
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '403':
+          $ref: "#/components/responses/403Forbidden"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
+  /routes/navigation:
+    get:
+      summary: Generate navigation route between two points combining walking paths and bus lines
+      tags:
+        - routes
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: departure_timestamp
+          schema:
+            type: number
+          description: The departure timestamp
+          required: true
+      responses:
+        '200':
+            description: "TODO: write description"
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    oneOf:
+                      - $ref: "#/components/schemas/NavigationFootLeg"
+                      - $ref: "#/components/schemas/NavigationBusLeg"
+        '400':
+          $ref: "#/components/responses/400BadRequest"
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '403':
+          $ref: "#/components/responses/403Forbidden"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
+                
