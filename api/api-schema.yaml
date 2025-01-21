@@ -52,6 +52,17 @@ components:
           type: string
       required:
         - message
+    Time:
+      type: object
+      properties:
+        hour:
+          type: integer
+          minimum: 0
+          maximum: 23
+        minute:
+          type: integer
+          minimum: 0
+          maximum: 59
     User:
       type: object
       properties:
@@ -186,7 +197,7 @@ components:
                 items:
                   type: array
                   items:
-                    type: string
+                    $ref: "#/components/schemas/Time"
 
 tags:
   - name: authentication
@@ -575,12 +586,11 @@ paths:
                     items:
                       type: array
                       items:
-                        type: string
+                        $ref: "#/components/schemas/Time"
         '401':
           $ref: "#/components/responses/401Unauthorized"
         '404':
           $ref: "#/components/responses/404NotFound"
         '500':
           $ref: "#/components/responses/500InternalServerError"
-
 

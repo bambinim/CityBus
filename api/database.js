@@ -16,6 +16,11 @@ const renewTokenSchema = new Schema({
     userId: {type: Schema.Types.ObjectId, required: true, ref: "User"}
 });
 
+const timeSchema = new Schema({
+    hour: {type: Number, required: true},
+    minute: {type: Number, required: true}
+}, {_id: false});
+
 const pointSchema = new Schema({
     type: {type: String, required: true, enum: ["Point"], default: "Point"},
     coordinates: {type: [Number], required: true, default: undefined}
@@ -37,7 +42,7 @@ const directionSchema = new Schema({
         routeToNext: {type: [routeStepSchema], required: true, default: undefined},
         timeToNext: {type: Number, required: true}
     })], required: true, default: undefined},
-    timetable: {type: [[Number]], required: true, default: undefined}
+    timetable: {type: [[timeSchema]], required: true, default: undefined}
 });
 
 const busLineSchema = new Schema({
