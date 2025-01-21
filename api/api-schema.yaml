@@ -165,7 +165,7 @@ components:
                 type: array
                 items:
                   $ref: "#/components/schemas/GeoJSONLineString"
-    FullBusLine:
+    CompleteBusLine:
       type: object
       properties:
         name:
@@ -208,6 +208,8 @@ tags:
     description: Routing engine interface
   - name: busline
     description: Bus lines, directions and stops
+  - name: busstop
+    description: Bus stops
 
 paths:
   /auth/session:
@@ -247,7 +249,7 @@ paths:
         '400':
           $ref: "#/components/responses/400BadRequest"
         '401':
-          $ref: "##/components/responses/401Unauthorized"
+          $ref: "#/components/responses/401Unauthorized"
         '500':
           $ref: "#/components/responses/500InternalServerError"
     put:
@@ -282,6 +284,21 @@ paths:
                   - renewToken
         '401':
           $ref: "#/components/responses/401Unauthorized"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
+    delete:
+      summary: Delete current user's session (equivalent to logout)
+      tags:
+        - authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Session deleted
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
   /auth/password:
     put:
       summary: Update user's password
@@ -466,7 +483,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/FullBusLine"
+              $ref: "#/components/schemas/CompleteBusLine"
       responses:
         '201':
           description: "Resource created successfully"
@@ -496,12 +513,51 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/FullBusLine"
+              $ref: "#/components/schemas/CompleteBusLine"
       responses:
         '200':
           description: "Resource updated successfully"
         '400':
           $ref: "#/components/responses/400BadRequest"
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '403':
+          $ref: "#/components/responses/403Forbidden"
+        '404':
+          $ref: "#/components/responses/404NotFound"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
+    delete:
+      summary: Delete bus line
+      tags:
+        - busline
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: "Resource deleted successfully"
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '403':
+          $ref: "#/components/responses/403Forbidden"
+        '404':
+          $ref: "#/components/responses/404NotFound"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
+  /buslines/{busLineId}/complete:
+    get:
+      summary: Retrieve all informations about specified bus line
+      tags:
+        - busline
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: "Complete bus line informations"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompleteBusLine"
         '401':
           $ref: "#/components/responses/401Unauthorized"
         '403':
@@ -524,6 +580,12 @@ paths:
             type: string
           required: true
           description: Id of the bus line
+        - in: query
+          name: search
+          schema:
+            type: string
+          required: false
+          description: Search string to filter stops
       responses:
         '200':
           description: List of directions for specified bus line
@@ -594,3 +656,108 @@ paths:
         '500':
           $ref: "#/components/responses/500InternalServerError"
 
+  /busstops:
+    get:
+      summary: Retrieve list of bus stops
+      tags:
+        - busstop
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: near
+          schema:
+            type: string
+          required: false
+          description: Location to seach near (in format <logitude>,<latitude>)
+        - in: query
+          name: search
+          schema:
+            type: string
+          required: false
+          description: Search string to filter stops
+      responses:
+        '200':
+          description: List of bus stops
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+        '400':
+          $ref: "#/components/responses/400BadRequest"
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
+  /busstops/{busStopId}:
+    get:
+      summary: Retrieve informations about specified bus stop
+      tags:
+        - busstop
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: busStopId
+          schema:
+            type: string
+          required: true
+          description: Id of the bus stop
+      responses:
+        '200':
+          description: Bus stop informtions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  lines:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        direction:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '404':
+          $ref: "#/components/responses/404NotFound"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
+    delete:
+      summary: Delete bus stop
+      tags:
+        - busline
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Resource deleted successfully
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '403':
+          $ref: "#/components/responses/403Forbidden"
+        '404':
+          $ref: "#/components/responses/404NotFound"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"

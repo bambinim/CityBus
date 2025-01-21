@@ -42,13 +42,13 @@ const directionSchema = new Schema({
         routeToNext: {type: [routeStepSchema], required: true, default: undefined},
         timeToNext: {type: Number, required: true}
     })], required: true, default: undefined},
-    timetable: {type: [[timeSchema]], required: true, default: undefined}
+    timetable: {type: [[timeSchema]], required: true, default: undefined},
+    fullRoute: {type: [routeStepSchema], required: true, default: undefined}
 });
 
 const busLineSchema = new Schema({
     name: {type: String, required: true},
-    directions: {type: [directionSchema], required: true, default: undefined},
-    fullRoute: {type: [routeStepSchema], required: true, default: undefined}
+    directions: {type: [directionSchema], required: true, default: undefined}
 });
 
 const busStopSchema = new Schema({
