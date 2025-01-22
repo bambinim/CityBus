@@ -831,7 +831,7 @@ paths:
           $ref: "#/components/responses/404NotFound"
         '500':
           $ref: "#/components/responses/500InternalServerError"
-  /stops/{busStopId}/rides:
+  /stops/{busStopId}/departures:
     get:
       summary: List rides departing from specified bus stop
       tags:
@@ -869,3 +869,85 @@ paths:
                       type: number
                     delay:
                       type: number
+
+  /rides:
+    get:
+      summary: Rietrieve list of active bus rides
+      tags:
+        - busride
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: line
+          schema:
+            type: string
+          required: false
+          description: Line id; used to filter results
+        - in: query
+          name: direction
+          schema:
+            type: string
+          required: false
+          description: Direction id; used to filter results
+      responses:
+        '200':
+          description: List of bus rides
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    line:
+                      $ref: "#/components/schemas/LineDirection"
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
+  /rides/{busRideId}:
+    get:
+      summary: Retrieve informations about specified bus ride
+      tags:
+        - busride
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: busRideId
+          schema:
+            type: string
+          required: true
+          description: Id of bus ride
+      responses:
+        '200':
+          description: Bus ride informations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  line:
+                    $ref: "#/components/schemas/LineDirection"
+                  stops:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        stopId:
+                          type: string
+                        name:
+                          type: string
+                        expectedArrivalTimestamp:
+                          type: number
+                        isBusPassed:
+                          type: boolean
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"

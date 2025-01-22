@@ -58,6 +58,8 @@ const busStopSchema = new Schema({
 });
 
 const busRideSchema = new Schema({
+    scheduledDepartureTimestamp: {type: Number, required: true},
+    lineId: {type: Schema.Types.ObjectId, required: true, ref: "BusLine"},
     directionId: {type: Schema.Types.ObjectId, required: true, ref: "BusLine.directions"},
     status: {type: String, required: true, enum: ["running", "finished"]},
     stops: {type: [new Schema({
