@@ -1,3 +1,10 @@
-const router = require("express").Router();
+const express = require("express");
+const {allowedRoles} = require("../middleware/security");
 
-export default router;
+const router = express.Router();
+
+router.get("/test", allowedRoles(["admin"]), (req, res) => {
+    res.send({message: "User authenticated"});
+})
+
+module.exports = router;

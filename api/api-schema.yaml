@@ -122,6 +122,20 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/RouteStep"
+    LineDirection:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        direction:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
     NavigationFootLeg:
       type: object
       properties:
@@ -152,6 +166,8 @@ components:
           type: number
         arrivalTimestamp:
           type: number
+        line:
+          $ref: "#/components/schemas/LineDirection"
         stops:
           type: array
           items:
@@ -159,6 +175,8 @@ components:
             properties:
               name:
                 type: string
+              location:
+                $ref: "#/components/schemas/GeoJSONPoint"
               timeToNext:
                 type: number
               routeToNext:
@@ -199,17 +217,20 @@ components:
                   items:
                     $ref: "#/components/schemas/Time"
 
+
 tags:
   - name: authentication
     description: Users' authentication
-  - name: user
-    description: User profile
+  - name: users
+    description: Users management
   - name: routes
     description: Routing engine interface
   - name: busline
     description: Bus lines, directions and stops
   - name: busstop
     description: Bus stops
+  - name: busride
+    description: Bus rides
 
 paths:
   /auth/session:
@@ -299,40 +320,12 @@ paths:
           $ref: "#/components/responses/401Unauthorized"
         '500':
           $ref: "#/components/responses/500InternalServerError"
-  /auth/password:
-    put:
-      summary: Update user's password
-      tags:
-        - authentication
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                oldPassword:
-                  type: string
-                newPassword:
-                  type: string
-              required:
-                - oldPassword
-                - newPassword
-      responses:
-        "200":
-          description: Password changed successfully
-        "403":
-          $ref: "#/components/responses/403Forbidden"
-        '500':
-          $ref: "#/components/responses/500InternalServerError"
 
-  /user:
+  /users/me:
     get:
       summary: Get logged user's informations
       tags:
-        - user
+        - users
       security:
         - BearerAuth: []
       responses:
@@ -349,7 +342,7 @@ paths:
     put:
       summary: Update user's informations
       tags:
-        - user
+        - users
       security:
         - BearerAuth: []
       requestBody:
@@ -375,6 +368,67 @@ paths:
           $ref: "#/components/responses/401Unauthorized"
         '500':
           $ref: "#/components/responses/500InternalServerError"
+  /users/me/password:
+    put:
+      summary: Update user's password
+      tags:
+        - users
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                oldPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        "200":
+          description: Password changed successfully
+        '400':
+          $ref: "#/components/responses/400BadRequest"
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          description: Old password does not match
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
+  /users/registration:
+    post:
+      summary: Register new user
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: "User created successfully"
+        '400':
+          $ref: "#/components/responses/400BadRequest"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
+
 
   /routes/busline:
     get:
@@ -427,11 +481,20 @@ paths:
             content:
               application/json:
                 schema:
-                  type: array
-                  items:
-                    oneOf:
-                      - $ref: "#/components/schemas/NavigationFootLeg"
-                      - $ref: "#/components/schemas/NavigationBusLeg"
+                  type: object
+                  properties:
+                    totalDuration:
+                      type: number
+                    departureTimestamp:
+                      type: number
+                    arrivalTimestamp:
+                      type: number
+                    legs:
+                      type: array
+                      items:
+                        oneOf:
+                          - $ref: "#/components/schemas/NavigationFootLeg"
+                          - $ref: "#/components/schemas/NavigationBusLeg"
         '400':
           $ref: "#/components/responses/400BadRequest"
         '401':
@@ -441,7 +504,7 @@ paths:
         '500':
           $ref: "#/components/responses/500InternalServerError"
 
-  /buslines:
+  /lines:
     get:
       summary: Retrieve list of bus lines
       tags:
@@ -495,7 +558,7 @@ paths:
           $ref: "#/components/responses/403Forbidden"
         '500':
           $ref: "#/components/responses/500InternalServerError"
-  /buslines/{busLineId}:
+  /lines/{busLineId}:
     put:
       summary: Update existing bus line
       tags:
@@ -544,7 +607,7 @@ paths:
           $ref: "#/components/responses/404NotFound"
         '500':
           $ref: "#/components/responses/500InternalServerError"
-  /buslines/{busLineId}/complete:
+  /lines/{busLineId}/complete:
     get:
       summary: Retrieve all informations about specified bus line
       tags:
@@ -566,7 +629,7 @@ paths:
           $ref: "#/components/responses/404NotFound"
         '500':
           $ref: "#/components/responses/500InternalServerError"
-  /buslines/{busLineId}/directions:
+  /lines/{busLineId}/directions:
     get:
       summary: Get all available directions for specified bus line
       tags:
@@ -606,7 +669,7 @@ paths:
           $ref: "#/components/responses/404NotFound"
         '500':
           $ref: "#/components/responses/500InternalServerError"
-  /buslines/{busLineId}/directions/{directionId}/timetable:
+  /lines/{busLineId}/directions/{directionId}/timetable:
     get:
       summary: Get timetable for specified line and direction
       tags:
@@ -656,7 +719,7 @@ paths:
         '500':
           $ref: "#/components/responses/500InternalServerError"
 
-  /busstops:
+  /stops:
     get:
       summary: Retrieve list of bus stops
       tags:
@@ -696,7 +759,7 @@ paths:
           $ref: "#/components/responses/401Unauthorized"
         '500':
           $ref: "#/components/responses/500InternalServerError"
-  /busstops/{busStopId}:
+  /stops/{busStopId}:
     get:
       summary: Retrieve informations about specified bus stop
       tags:
@@ -747,9 +810,16 @@ paths:
     delete:
       summary: Delete bus stop
       tags:
-        - busline
+        - busstop
       security:
         - BearerAuth: []
+      parameters:
+        - in: path
+          name: busStopId
+          schema:
+            type: string
+          required: true
+          description: Id of the bus stop
       responses:
         '200':
           description: Resource deleted successfully
@@ -761,3 +831,41 @@ paths:
           $ref: "#/components/responses/404NotFound"
         '500':
           $ref: "#/components/responses/500InternalServerError"
+  /stops/{busStopId}/rides:
+    get:
+      summary: List rides departing from specified bus stop
+      tags:
+        - busstop
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: busStopId
+          schema:
+            type: string
+          required: true
+          description: Id of the bus stop
+        - in: query
+          name: departure_timestamp
+          schema:
+            type: number
+          required: true
+          description: Departure timestamp
+      responses:
+        '200':
+          description: List of busses departing from specified stop at specified time 
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    line:
+                      $ref: "#/components/schemas/LineDirection"
+                    rideId:
+                      type: string
+                    scheduledArrivalTimestamp:
+                      type: number
+                    delay:
+                      type: number

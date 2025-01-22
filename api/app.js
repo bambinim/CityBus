@@ -24,13 +24,14 @@ function createCollections() {
 
 function routerSetup() {
     const router = require("./routes");
-    app.use(router, '/');
+    app.use("/", router);
 }
 
 async function runDevelopmentServer() {
     Logger.info("Starting development server")
     await connectToMongo();
     createCollections();
+    routerSetup();
     const fs = require("fs");
     const YAML = require("yaml");
     const swaggerUi = require("swagger-ui-express");

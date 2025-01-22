@@ -15,6 +15,7 @@ services:
     entrypoint: /bin/bash
     tty: true
     environment:
+      APP_SECRET: 26sf0PRZwuaYWJ0wF6L8mv6jnro8dC45
       MONGODB_URL: mongodb://root:password@mongo:27017/citybus?authSource=admin
       LOGGING_LEVEL: DEBUG
     networks:
