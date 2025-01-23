@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const config = require("./config");
 const logging = require("./logging");
+const bodyParser = require('body-parser');
 
 const app = express()
 const Logger  = logging.Logger;
@@ -24,7 +25,12 @@ function createCollections() {
 
 function routerSetup() {
     const router = require("./routes");
+    const userRoutes = require('./routes/usersRoutes')
+    const authenticationsRoutes = require('./routes/authenticationsRoutes')
     app.use("/", router);
+    app.use(bodyParser.json());
+    app.use('/users', userRoutes);
+    app.use('/auth', authenticationsRoutes)
 }
 
 async function runDevelopmentServer() {
