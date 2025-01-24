@@ -24,5 +24,12 @@
             "restart": true,
             "outputCapture": "std"
         }
-    ]
+    ],
+    "compounds": [
+        {
+          "name": "Full Stack",
+          "configurations": ["API", "Frontend"],
+          "stopAll": true
+        }
+      ]
 }
