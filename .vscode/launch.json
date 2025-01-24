@@ -8,9 +8,19 @@
             "type": "node",
             "request": "launch",
             "name": "API",
-            "runtimeExecutable": "nodemon",
+            "runtimeExecutable": "npm",
+            "args": ["run", "dev"],
             "cwd": "${workspaceFolder}/api",
-            "program": "app.js",
+            "restart": true,
+            "outputCapture": "std"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Frontend",
+            "runtimeExecutable": "npm",
+            "args": ["run", "dev"],
+            "cwd": "${workspaceFolder}/frontend",
             "restart": true,
             "outputCapture": "std"
         }

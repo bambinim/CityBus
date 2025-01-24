@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "dev": "nodemon app.js"
+  },
   "type": "commonjs",
   "dependencies": {
     "@mapbox/polyline": "^1.2.1",
