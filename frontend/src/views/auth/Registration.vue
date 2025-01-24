@@ -40,12 +40,12 @@ const onFormSubmit = ({ valid, values }) => {
         return;
     }
     UsersService.registration(values.firstName, values.lastName, values.email, values.password).then(() => {
-            toast.add({severity: 'success', summary: 'Registrazione completata. Verrai reindirizzato automaticamente alla pagina di login.', life: 5000 })
+            toast.add({severity: 'success', summary: 'Registrazione completata. Verrai reindirizzato automaticamente alla pagina di login.', life: 3000 })
             setTimeout(() => {
                 router.push({ path: '/login' })
-            }, 5000);
+            }, 3000);
         }).catch(err => {
-            toast.add({severity: 'error', summary: err, life: 5000 })
+            toast.add({severity: 'error', summary: err, life: 3000 })
         });
 };
 </script>
