@@ -44,7 +44,7 @@ exports.authenticateUser = async (req, res) => {
         await newRenewToken.save();
 
         Logger.info("User logged in successfully");
-        res.status(201).json({ jwtToken, renewToken });
+        res.status(201).json({ jwt: jwtToken, renewToken });
     } catch (error) {
         Logger.error("Login failed: " + error.message);
         res.status(500).send({message: "Internal server error"});
