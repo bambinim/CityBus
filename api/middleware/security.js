@@ -1,6 +1,9 @@
 const { Logger } = require("../logging");
 const config = require("../config");
 const jwt = require("jsonwebtoken");
+const bcrypt = require('bcrypt');
+
+const SALT_ROUND = 10; 
 
 function send401Response(res) {
     res.status(401).send({message: "User not authenticated"});
@@ -25,11 +28,30 @@ module.exports = {
                     send403Response(res);
                     return
                 }
+                console.log(decoded)
+                req.userId = decoded.userId;
             } catch (error) {
                 send401Response(res);
                 return;
             }
             next();
+        }
+    },
+    hashPassword: async (password) => {
+        try {
+            const salt = await bcrypt.genSalt(SALT_ROUND);
+            const hash = await bcrypt.hash(password, salt);
+            return hash;
+        } catch (error) {
+            Logger.debug('Errore nell\'hashing della password:', error);
+        }
+    },
+    verifyPassword: async (password, hash) => {
+        try {
+            const match = await bcrypt.compare(password, hash);
+            return match;
+        } catch (error) {
+            Logger.debug('Errore nella verifica della password:', error);
         }
     }
 }

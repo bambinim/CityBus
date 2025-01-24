@@ -8,7 +8,7 @@ const authenticationsController = require('../controllers/authenticationsControl
 
 router.post('/session', authenticationsController.authenticateUser)
 router.put('/session', authenticationsController.renewSession)
-router.delete('/session', allowedRoles("user", "driver", "admin"), authenticationsController.deleteSession)
+router.delete('/session', allowedRoles(["user", "driver", "admin"]), authenticationsController.deleteSession)
 
 
 

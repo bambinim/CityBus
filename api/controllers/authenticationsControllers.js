@@ -4,24 +4,30 @@ const {RenewToken} = require('../database')
 const jwt = require('jsonwebtoken')
 const { Logger } = require("../logging");
 const config = require('../config');
-
+const {verifyPassword} = require("../middleware/security");
 
 
 exports.authenticateUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = await User.findOne({ email, password });
+        const user = await User.findOne({ email});
         if (!user) {
             Logger.error("Login failed: User not found");
             res.status(401).send({message: "Login failed: User not found"});
             return;
         }
 
+        if(!verifyPassword(password, user.password)){
+            Logger.error("Login failed: Password not correct");
+            res.status(401).send({message: "Login failed: Password not correct"});
+            return;
+        }
+
         const jwtToken = jwt.sign(
             { userId: user._id, role: user.role },
             config.APP_SECRET,
-            { expiresIn: '15m' }
+            { expiresIn: '1d' }
         );
 
         const renewToken = jwt.sign(
@@ -68,7 +74,7 @@ exports.renewSession = async (req, res) => {
         const newJwtToken = jwt.sign(
             { userId: user._id, role: user.role },
             config.APP_SECRET,
-            { expiresIn: '15m' }
+            { expiresIn: '1d' }
         );
 
         const newRenewToken = jwt.sign(
@@ -93,17 +99,8 @@ exports.renewSession = async (req, res) => {
 };
 
 exports.deleteSession = async (req, res) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-        return res.status(401).json({ message: "Unauthorized: No token provided" });
-    }
-
     try {
-        const decoded = jwt.verify(token, config.APP_SECRET);
-    
-        const result = await RenewToken.deleteOne({ userId: decoded.userId });
+        const result = await RenewToken.deleteOne({ userId: req.userId });
         if (result.deletedCount === 0) {
             return res.status(500).json({ message: "Internal Server Error: No session found to delete" });
         }

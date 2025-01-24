@@ -27,10 +27,12 @@ function routerSetup() {
     const router = require("./routes");
     const userRoutes = require('./routes/usersRoutes')
     const authenticationsRoutes = require('./routes/authenticationsRoutes')
+    const stopsRoutes = require('./routes/stopsRoutes')
     app.use("/", router);
     app.use(bodyParser.json());
     app.use('/users', userRoutes);
     app.use('/auth', authenticationsRoutes)
+    app.use('/stops', stopsRoutes);
 }
 
 async function runDevelopmentServer() {
