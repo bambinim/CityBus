@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { faCompass, faMap, faRoad, faClock, faBus, faUser, faRightFromBracket, faGear, faUsers } from '@fortawesome/free-solid-svg-icons'
 import { useUserStore } from '@/stores/user'
 import { useAuthenticationStore } from '@/stores/authentication';
@@ -10,16 +10,21 @@ const userStore = useUserStore();
 const authStore = useAuthenticationStore();
 const router = useRouter();
 
-const menuBarItems = ref([
-    {label: 'Cerca percorso', icon: faCompass},
-    {label: 'Partenze', icon: faClock},
-    {label: 'Cerca linea', icon: faBus},
-    {label: 'Amministrazione', icon: faGear, items: [
-        {label: 'Mappa', icon: faMap},
-        {label: 'Linee', icon: faRoad},
-        {label: 'Utenti', icon: faUsers}
-    ]}
-]);
+const menuBarItems = computed(() => {
+    const items = [
+        {label: 'Cerca percorso', icon: faCompass},
+        {label: 'Partenze', icon: faClock},
+        {label: 'Cerca linea', icon: faBus}
+    ]
+    if (userStore.role == 'admin') {
+        items.push({label: 'Amministrazione', icon: faGear, items: [
+            {label: 'Mappa', icon: faMap},
+            {label: 'Linee', icon: faRoad},
+            {label: 'Utenti', icon: faUsers}
+        ]})
+    }
+    return items;
+});
 
 const logoutFunction = () => {
     AuthenticationService.logout();
