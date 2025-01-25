@@ -8,6 +8,10 @@ export const useAuthenticationStore = defineStore('authentication', {
             localStorage.setItem('jwt', jwt)
             this.renewToken = renewToken
             localStorage.setItem('renewToken', renewToken)
+        },
+        deleteTokens() {
+            localStorage.removeItem('jwt')
+            localStorage.removeItem('renewToken')
         }
     }
 });

@@ -1,24 +1,26 @@
-import axios from "axios";
-
-const API_ENDPINT = import.meta.env.VITE_API_ENDPOINT
+import requests from "@/lib/requests";
 
 export const AuthenticationService = {
-    login(email, password) {
-        return new Promise(async (resolve, reject) => {
-            let msg = '';
-            try {
-                const res = await axios.post(`${API_ENDPINT}/auth/session`, { email, password })
-                if (res.status == 201) {
-                    resolve({jwt: res.data.jwt, renewToken: res.data.renewToken})
-                    return;
-                }
-                msg = 'Email o password non validi'
-            } catch (err) {
-                msg = 'Autenticazione fallita'
+    async login(email, password) {
+        let msg = ''
+        try {
+            const res = await requests.post(`/auth/session`, { data: {email, password} })
+            if (res.status == 201) {
+                return {jwt: res.data.jwt, renewToken: res.data.renewToken}
             }
-            reject(msg)
-        });
+            msg = 'Email o password non validi'
+        } catch (err) {
+            msg = 'Autenticazione fallita'
+        }
+        throw msg
     },
-    logout() {},
-    renewSession() {}
+    async logout() {
+        try {
+            const res = await requests.delete(`/auth/session`, { authenticated: true })
+            if (res.status == 201) {
+                return 'Logout effettuato con successo'
+            }
+        } catch (err) {}
+        throw 'Errore durante il logout'
+    }
 };
