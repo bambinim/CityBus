@@ -3,21 +3,20 @@ const {hashPassword, verifyPassword} = require("../middleware/security");
 
 exports.registerNewUser = async (req, res) => {
     try{
-        const {firstName, lastName, email, password, role} = req.body
+        const {firstName, lastName, email, password} = req.body
         hash = await hashPassword(password)
         const user = new User({
             name: { first: firstName, last: lastName},
             email, 
             password: hash,
-            role
         });
         await user.save()
         res.status(201).send("User created successfully")
     }catch (error) {
         if (error.code === 11000) {
-            return res.status(400).send('Email already exists')
+            return res.status(400).send({message: 'Request not valid'})
         }
-        res.status(500).send('Internal Server Error')
+        res.status(500).send({message: 'Internal Server Error'})
     }
 }
 
@@ -40,10 +39,10 @@ exports.changeUserInformation = async (req, res) => {
         last: lastName
       }
       await user.save();
-      res.json({ message: 'User updated' });
+      res.status(200).send({ message: 'User updated' });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: 'Server error' });
+      res.status(500).send({ message: 'Server error' });
     }
 };
 
@@ -54,7 +53,7 @@ exports.updatePassword = async (req, res) => {
       if (verifyPassword(oldPassword, user.password)) {
         user.password = await hashPassword(newPassword);
         await user.save();
-        res.json({ message: 'Password updated' });
+        res.status(200).json({ message: 'Password changed successfully' });
       } else {
         res.status(403).json({ message: 'Old password does not match' });
       }

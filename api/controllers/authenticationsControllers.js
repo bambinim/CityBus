@@ -60,14 +60,14 @@ exports.renewSession = async (req, res) => {
 
         if (!renewTokenEntry) {
             Logger.error("Unauthorized: Invalid renew token");
-            return res.status(401).json({ message: "Unauthorized: Invalid renew token" });
+            return res.status(401).send({ message: "Unauthorized: Invalid renew token" });
         }
 
         // Trova l'utente corrispondente al token
         const user = await User.findById(decoded.userId);
         if (!user) {
             Logger.error("Unauthorized: User not found");
-            return res.status(401).json({ message: "Unauthorized: User not found" });
+            return res.status(401).send({ message: "Unauthorized: User not found" });
         }
 
 
@@ -90,10 +90,10 @@ exports.renewSession = async (req, res) => {
         res.status(200).json({ jwt: newJwtToken, renewToken: newRenewToken });
     } catch (error) {
         if (error instanceof jwt.JsonWebTokenError) {
-            res.status(401).json({ message: "Unauthorized: Invalid token" });
+            res.status(401).send({ message: "Unauthorized: Invalid token" });
         } else {
             console.error('Error renewing session:', error);
-            res.status(500).json({ message: "Internal Server Error" });
+            res.status(500).send({ message: "Internal Server Error" });
         }
     }
 };
@@ -102,12 +102,12 @@ exports.deleteSession = async (req, res) => {
     try {
         const result = await RenewToken.deleteOne({ userId: req.userId });
         if (result.deletedCount === 0) {
-            return res.status(500).json({ message: "Internal Server Error: No session found to delete" });
+            return res.status(500).send({ message: "Internal Server Error" });
         }
 
-        res.status(200).json({ message: "Session deleted" });
+        res.status(200).send("Session deleted");
     } catch (error) {
         console.error("Error deleting session:", error);
-        res.status(500).json({ message: "Internal Server Error" });
+        res.status(500).send({ message: "Internal Server Error" });
     }
 }
