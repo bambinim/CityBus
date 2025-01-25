@@ -22,7 +22,7 @@ exports.registerNewUser = async (req, res) => {
 
 exports.getUserInformation = async (req, res) => {
     try {
-        const user = await User.findById(req.userId).select('-password -_id');
+        const user = await User.findById(req.userId).select('-password -_id -__v');
         res.json(user);
     } catch (error) {
         console.error(error);
