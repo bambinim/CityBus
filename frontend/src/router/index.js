@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/views/auth/Login.vue'
 import RegistrationView from '@/views/auth/Registration.vue'
 import TemplateView from '@/views/TemplateView.vue'
-import BusLineEditView from '@/views/BusLineEdit.vue'
+import BusLineEditView from '@/views/line/BusLineEdit.vue'
 import { useUserStore } from '@/stores/user'
 import { UsersService } from '@/service/UsersService'
 
