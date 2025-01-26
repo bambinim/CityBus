@@ -6,7 +6,6 @@ const {BusLines} = require('../database')
 exports.getBusStops = async (req, res) => {
     const {near, search} = req.query
     const query = {}
-
     if(near){
         const coordinates = near.split(',').map(Number)
         query.location = {
@@ -29,6 +28,7 @@ exports.getBusStops = async (req, res) => {
         const response = busStops.map(stop => ({
             stopId: stop._id,
             name: stop.name,
+            location: stop.location
         }));
         res.json(response)
     }catch (error) {
@@ -69,6 +69,7 @@ exports.getBusStopInformation = async (req,res) => {
         res.status(500).json({ message: 'Error processing your request' });
     }
 }
+
 
 exports.saveBusStops = async (req,res) => {
     const {name, coordinates} = req.body

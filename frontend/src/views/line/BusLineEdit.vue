@@ -42,7 +42,9 @@ const handleUpdateLine = (data) => {
     data.directions.forEach(direction => {
         directions.value.push({
             name: direction.name,
-            stops: []
+            stops: [],
+            timetable: [],
+            routeLegs: []
         })
     });
     currentStep.value++;
@@ -50,8 +52,7 @@ const handleUpdateLine = (data) => {
 
 const handleSaveStop = async (data) => {
     try {
-        await BusStopService.saveBusStop(data.value);
-        console.log('Bus stop saved successfully:', savedStop);
+        await BusStopService.saveBusStop(data);
     } catch (error) {
         console.error('Error saving bus stop:', error);
     }
