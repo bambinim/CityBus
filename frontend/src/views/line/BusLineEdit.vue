@@ -10,10 +10,10 @@
                     <EditLineStepOne :line="line" @update-line="handleUpdateLine" />
                 </div>
                 <div v-else-if="currentStep === 2" class="w-full">
-                    <EditLineStepTwo :directions="directions"/>
+                    <EditLineStepTwo :directions="directions" @generate-routes="handleGenerateRoutes"/>
                 </div>
                 <div v-else-if="currentStep === 3" class="w-full">
-                    <EditLineStepThree />
+                    <EditLineStepThree :directions="directions" @save-line="handleSaveLine"/>
                 </div>
             </div>
         </div>
@@ -27,6 +27,7 @@ import EditLineStepOne from '@/views/line/components/EditLineStepOne.vue';
 import EditLineStepTwo from '@/views/line/components/EditLineStepTwo.vue';
 import EditLineStepThree from '@/views/line/components/EditLineStepThree.vue';
 import { BusStopService } from '@/service/BusStopService';
+import { BusLineService } from '@/service/BusLineService';
 
 
 const currentStep = ref(1);
@@ -44,7 +45,7 @@ const handleUpdateLine = (data) => {
             name: direction.name,
             stops: [],
             timetable: [],
-            routeLegs: []
+            fullRoute: []
         })
     });
     currentStep.value++;
@@ -53,6 +54,24 @@ const handleUpdateLine = (data) => {
 const handleSaveStop = async (data) => {
     try {
         await BusStopService.saveBusStop(data);
+    } catch (error) {
+        console.error('Error saving bus stop:', error);
+    }
+}
+
+const handleGenerateRoutes = () => {
+    currentStep.value++
+}
+
+const handleSaveLine = async () => {
+    const data = {
+        name: busLine.value,
+        directions: directions.value
+    }
+    console.log(data)
+    try{
+        await BusLineService.createNewBusLine(data)
+        console.log('Nuova Linea salvata');
     } catch (error) {
         console.error('Error saving bus stop:', error);
     }
