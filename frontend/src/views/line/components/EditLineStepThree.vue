@@ -1,4 +1,5 @@
 <template>
+    <Toast />
     <TabView :scrollable="true">
         <TabPanel v-for="(direction, indexDir) in directions" :key="indexDir" :header="direction.name">
             <div class="flex flex-col w-full h-full">
@@ -17,7 +18,9 @@
 
 <script setup>
 import { useBusLineStore } from '@/stores/line';
+import { useToast } from 'primevue/usetoast';
 
+const toast = useToast();
 const store = useBusLineStore();
 const directions = store.line.directions;
 
@@ -32,6 +35,10 @@ const removeTime = (indexDir, timeIndex) => {
 }
 
 const saveLines = () => {
+    if(directions.some(dir => dir.timetable.length < 1)){
+        toast.add({ severity: 'warn', summary: 'Attenzione', detail: 'Inseririsci almeno un orario di partenza per ogni direzione', life: 3000 });
+        return
+    }
     emits('save-line')
 }
 

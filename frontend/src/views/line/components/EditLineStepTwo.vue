@@ -1,4 +1,5 @@
 <template>
+    <Toast />
     <TabView :scrollable="true">
         <TabPanel v-for="(direction, indexDir) in directions" :key="indexDir" :header="direction.name">
             <Splitter>
@@ -19,30 +20,34 @@
                 </SplitterPanel>
                 <SplitterPanel class="flex flex-col w-full h-full">
                     <h2 class="mb-4 ml-4">Tempi di percorrenza</h2>
-                    <Timeline :value="directions[indexDir].stops" layout="vertical" align="top" class="flex-grow items-center justify-center w-full">
+                    <Timeline :value="directions[indexDir].stops" layout="vertical" align="top" class="flex flex-col w-full">
                         <template #content="slotProps">
                             {{ slotProps.item.name }}
                         </template>
                         <template #opposite="slotProps">
-                            <small class="p-text-secondary"> {{ slotProps.item.timeToNext }} </small>
+                            <small class="p-text-secondary"> {{ Math.floor(slotProps.item.timeToNext / 60) }} </small>
                         </template>
                     </Timeline>
                 </SplitterPanel>
             </Splitter>
         </TabPanel>
     </TabView>
-    <Button label="Avanti" size="small" @click="submit"/>
+    <Button label="Avanti" size="small" @click="submit" :disabled="!isRoutesGenerated"/>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import { useToast } from 'primevue/usetoast';
 import { BusStopService } from '@/service/BusStopService';
 import { useBusLineStore } from '@/stores/line';
 
 const emits = defineEmits(['next-step']);
+const toast = useToast();
 
 const store = useBusLineStore();
 const directions = store.line.directions;
+
+const isRoutesGenerated = ref(false)
 
 const searchStops = async (indexDir, indexStop) => {
   try {
@@ -52,6 +57,7 @@ const searchStops = async (indexDir, indexStop) => {
     const stops = await BusStopService.searchBusStops(q);
     store.updateStopSuggestions(indexDir, indexStop, stops);
   } catch (error) {
+    toast.add({ severity: 'error', summary: 'Errore', detail: 'Errore nel recupero delle fermate', life: 3000 });
     console.error('Error fetching stops:', error);
   }
 };
@@ -61,7 +67,6 @@ const addStop = (directionIndex) => {
 };
 
 const selectStop = (indexDir, indexStop) => {
-    
     store.selectStop(indexDir, indexStop, directions[indexDir].stops[indexStop].query);
 }
 
@@ -70,7 +75,16 @@ const removeStop = (indexDir, indexStop) => {
 };
 
 const generateRoutes = () => {
-  store.generateRoutes();
+    if (directions.some(dir => dir.stops.length < 2)) {
+        toast.add({ severity: 'warn', summary: 'Attenzione', detail: 'Inserisci almeno due fermate valide per ogni direzione per generare i percorsi.', life: 3000 });
+        return;
+    }else if(directions.some(dir => dir.stops.some(stop => !stop.name.trim())) 
+            || directions.some(dir => dir.stops.some(stop => stop.name != stop.query))){
+        toast.add({ severity: 'warn', summary: 'Attenzione', detail: 'Fermate non valide.', life: 3000 });
+        return
+    }
+    store.generateRoutes();
+    isRoutesGenerated.value = true
 };
 
 const submit = () => {

@@ -1,4 +1,5 @@
 <template>
+  <Toast />
     <div class="flex flex-col items-center justify-center w-full h-full">
         <ScrollPanel class="h-full w-full flex">
             <div class="flex flex-col w-full">
@@ -21,9 +22,10 @@
 
 <script setup>
 import { useBusLineStore } from '@/stores/line';
+import { useToast } from 'primevue/usetoast';
 
 const emits = defineEmits(['next-step']);
-
+const toast = useToast();
 const store = useBusLineStore();
 
 const addDirection = () => {
@@ -34,8 +36,23 @@ const removeDirection = (index) => {
   store.removeDirection(index)
 };
 
+const isFormValid = () => {
+  if (!store.line.name.trim()) {
+    toast.add({ severity: 'error', summary: 'Errore', detail: 'Il nome della linea è obbligatorio.', life: 3000 });
+    return false;
+  }
+  if (store.line.directions.some(dir => !dir.name.trim())) {
+    toast.add({ severity: 'error', summary: 'Errore', detail: 'Tutte le direzioni devono avere un nome.', life: 3000 });
+    return false;
+  }
+  return true;
+};
+
+
 const submit = () => {
-  emits('next-step')
+  if (isFormValid()) {
+    emits('next-step');
+  }
 }
 
 

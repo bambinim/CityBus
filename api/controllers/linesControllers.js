@@ -12,6 +12,12 @@ exports.createNewLine = async (req, res) => {
         // Creazione dell'oggetto BusLine con i dati ricevuti
         const newBusLine = new BusLine({ name, directions });
         await newBusLine.save();
+        for (const direction of newBusLine.directions) {
+            await BusStop.updateMany(
+                { _id: { $in: direction.stops.map(stop => stop.stopId) } },
+                { $push: { connectedLineDirections: direction._id } }
+            );
+        }
         res.status(201).json({
             message: "Bus line created successfully",
         });

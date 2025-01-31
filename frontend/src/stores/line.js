@@ -46,7 +46,6 @@ export const useBusLineStore = defineStore('busLine', {
             }));
         },
         selectStop(directionIndex, stopIndex, selectedStop) {
-            console.log(selectedStop)
             const stop = this.line.directions[directionIndex].stops[stopIndex];
             stop.stopId = selectedStop.stopId;
             stop.name = selectedStop.name;
@@ -74,7 +73,6 @@ export const useBusLineStore = defineStore('busLine', {
         },
         async generateRoutes() {
             this.line.directions.forEach(async (direction) => {
-                console.log(direction)
                 const coordinates = direction.stops.map(stop => ({coordinates: stop.location.coordinates}))
                 const routeData = await RoutingService.calculateRoute(coordinates)
                 direction.fullRoute = RoutingDataElaborator.elaborateFullRoute(routeData)

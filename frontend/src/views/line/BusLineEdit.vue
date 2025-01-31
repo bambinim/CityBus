@@ -1,4 +1,5 @@
 <template>
+    <Toast />
     <AppMenu />
     <div class="flex flex-col items-center justify-center w-full h-full">
         <div class="grid grid-flow-col grid-rows-2 grid-cols-1 w-full h-full">
@@ -28,7 +29,11 @@ import EditLineStepThree from '@/views/line/components/EditLineStepThree.vue';
 import { BusStopService } from '@/service/BusStopService';
 import { BusLineService } from '@/service/BusLineService';
 import { useBusLineStore } from '@/stores/line';
+import { useToast } from 'primevue/usetoast';
+import { useRouter } from 'vue-router'
 
+const toast = useToast();
+const router = useRouter();
 const store = useBusLineStore();
 
 
@@ -51,9 +56,13 @@ const handleSaveLine = async () => {
         store.prepareData()
         await BusLineService.createNewBusLine(store.line);
         store.clearLine();
-        console.log('Nuova Linea salvata');
+        toast.add({severity: 'success', summary: 'Nuova linea salvata con successo', life: 3000 })
+        setTimeout(() => {
+            router.push({ path: '/home' })
+        }, 3000);
     } catch (error) {
-        console.error('Error saving bus stop:', error);
+        toast.add({ severity: 'warn', summary: 'Attenzione', detail: 'Errore nel salvataggio della linea', life: 3000 });
+        return
     }
 }
 
