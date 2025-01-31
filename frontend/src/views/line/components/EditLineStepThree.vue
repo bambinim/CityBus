@@ -32,7 +32,6 @@ const removeTime = (indexDir, timeIndex) => {
 }
 
 const saveLines = () => {
-    store.updateTime()
     emits('save-line')
 }
 

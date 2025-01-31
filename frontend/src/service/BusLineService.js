@@ -5,6 +5,7 @@ export const BusLineService = {
     async createNewBusLine(data){
         let msg = '';
         const {name, directions} = data
+        console.log(data)
         
         try{
             const res = await requests.post(`/lines`, { data: {

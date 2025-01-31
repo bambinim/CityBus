@@ -48,6 +48,7 @@ const handleSaveStop = async (data) => {
 
 const handleSaveLine = async () => {
     try{
+        store.prepareData()
         await BusLineService.createNewBusLine(store.line);
         store.clearLine();
         console.log('Nuova Linea salvata');

@@ -27,8 +27,33 @@ export const useBusLineStore = defineStore('busLine', {
         removeDirection(index) {
             this.line.directions.splice(index, 1);
         },
-        addStop(directionIndex, stop) {
-            this.line.directions[directionIndex].stops.push(stop);
+        addStop(directionIndex) {
+            this.line.directions[directionIndex].stops.push({
+                stopId: '',
+                name: '',
+                location: [],
+                routeToNext: [],
+                timeToNext: 0,
+                query: '',
+                filteredStops: []
+              })
+        },
+        updateStopSuggestions(directionIndex, stopIndex, suggestions) {
+            this.line.directions[directionIndex].stops[stopIndex].filteredStops = suggestions.map(s => ({
+              stopId: s.stopId,
+              name: s.name,
+              location: s.location
+            }));
+        },
+        selectStop(directionIndex, stopIndex, selectedStop) {
+            console.log(selectedStop)
+            const stop = this.line.directions[directionIndex].stops[stopIndex];
+            stop.stopId = selectedStop.stopId;
+            stop.name = selectedStop.name;
+            stop.location = selectedStop.location;
+
+            stop.query = selectedStop.name;
+            stop.filteredStops = [];
         },
         updateStop(directionIndex, stopIndex, stop) {
             this.line.directions[directionIndex].stops[stopIndex] = stop;
@@ -44,26 +69,13 @@ export const useBusLineStore = defineStore('busLine', {
             };
             this.line.directions[directionIndex].timetable.push(newTime);
         },
-        updateTime(){
-            this.line.directions.forEach(direction => {
-                direction.timetable = direction.timetable.map(t => ({         
-                        hour: t.selectedTime.getHours(),
-                        minute: t.selectedTime.getMinutes()
-                }),
-            )})
-        },
         removeTime(directionIndex, timeIndex) {
             this.line.directions[directionIndex].timetable.splice(timeIndex, 1);
         },
         async generateRoutes() {
             this.line.directions.forEach(async (direction) => {
-                const coordinates = direction.stops.map(stop => ({location: stop.name.location.coordinates}))
-                direction.stops = direction.stops.map(stop => ({
-                    stopId: stop.name.stopId,
-                    name: stop.name.name,
-                    routeToNext: stop.name.routeToNext,
-                    timeToNext: stop.name.timeToNext
-                }))
+                console.log(direction)
+                const coordinates = direction.stops.map(stop => ({coordinates: stop.location.coordinates}))
                 const routeData = await RoutingService.calculateRoute(coordinates)
                 direction.fullRoute = RoutingDataElaborator.elaborateFullRoute(routeData)
                 const routeSteps = RoutingDataElaborator.elaborateRouteStep(routeData)
@@ -71,6 +83,20 @@ export const useBusLineStore = defineStore('busLine', {
                     direction.stops[i].timeToNext = step.timeToNext
                     direction.stops[i].routeToNext = step.routeToNext
                 })
+            })
+        },
+        prepareData(){
+            this.line.directions.forEach((direction) => {
+                direction.stops = direction.stops.map(stop => ({
+                    stopId: stop.stopId,
+                    name: stop.name,
+                    routeToNext: stop.routeToNext,
+                    timeToNext: stop.timeToNext
+                }))
+                direction.timetable = direction.timetable.map(t => ({         
+                    hour: t.selectedTime.getHours(),
+                    minute: t.selectedTime.getMinutes()
+                }))
             })
         },
         clearLine() {
