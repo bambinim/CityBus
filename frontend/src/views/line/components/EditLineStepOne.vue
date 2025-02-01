@@ -1,21 +1,22 @@
 <template>
-    <div class="flex flex-col items-center justify-center w-full h-full">
-        <ScrollPanel class="h-full w-full flex">
-            <div class="flex flex-col w-full">
-                <h2 class="m-2">Inserisci Dettagli della Linea</h2>
-                <InputText v-model="lineName" placeholder="Nome della linea" class="m-2" :invalid="!lineName"/>
-                <h3 class="m-2">Direzioni:</h3>
-                <div v-for="(direction, index) in directions" :key="index" class="m-2 flex flex-col direction-item grid grid-flow-col grid-rows-1 grid-cols-5 gap-4">
-                    <InputText v-model="direction.name" placeholder="Nome direzione" class="col-span-4" :invalid="!direction.name" />
-                    <Button icon="pi pi-minus" class="p-button-danger col-span-1 flex justify-end" @click="removeDirection(index)"/>
-                </div>
-                <Button label="Aggiungi direzione" @click="addDirection" severity="secondary" size="small" class="m-2" />
-            </div>
-        </ScrollPanel>
+  <ScrollPanel class="flex flex-col">
+    <div class="grid grid-cols-3 gap-3">
+      <div class="col-span-3 md:col-span-1">
+        <h2 class="m-2 text-xl">Dettagli</h2>
+        <InputText v-model="busLine.name" placeholder="Nome della linea" class="m-2" :invalid="!busLine.name"/>
+      </div>
+      <div class="col-span-3 md:col-span-2">
+        <h2 class="m-2 text-xl">Direzioni</h2>
+        <div class="grid grid-cols-3 gap-2">
+          <div v-for="(direction, index) in busLine.directions" :key="index" class="col-span-3 md:col-span-1 flex flex-row">
+            <InputText v-model="direction.name" placeholder="Nome direzione" :invalid="!direction.name" />
+            <Button icon="pi pi-trash" severity="danger" variant="text" aria-label="Elimina direzione" @click="removeDirection(index)" />
+          </div>
+        </div>
+        <Button label="Aggiungi direzione" icon="pi pi-plus" @click="addDirection" severity="secondary" class="m-2" />
+      </div>
     </div>
-    <div class="w-full flex justify-end p-4">
-        <Button label="Avanti" size="small" @click="submit"/>
-    </div>
+  </ScrollPanel>
 </template>
 
 
@@ -23,21 +24,14 @@
 
 import { ref } from 'vue';
 
-const emits = defineEmits(['update-line']);
-
-const lineName = ref('')
-const directions = ref([])
+const busLine = defineModel();
 
 const addDirection = () => {
-  directions.value.push({ name: '' });
+  busLine.value.directions.push({ name: '', stops: [], routeLegs: [], timetable: [] });
 };
 
 const removeDirection = (index) => {
-  directions.value.splice(index, 1);
-};
-
-const submit = () => {
-  emits('update-line', { name: lineName.value, directions: directions.value });
+  busLine.value.directions.splice(index, 1);
 };
 
 </script>

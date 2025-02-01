@@ -14,6 +14,7 @@ export const BusLineService = {
             if (res.status == 201) {
                 return;
             }
+            msg = 'Si è verificato un errore durante il salvataggio'
         }catch{
             msg = 'Salvataggio linea fallito'
         }

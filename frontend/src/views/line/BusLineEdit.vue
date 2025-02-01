@@ -1,79 +1,80 @@
 <template>
+    <Toast />
     <AppMenu />
-    <div class="flex flex-col items-center justify-center w-full h-full">
-        <div class="grid grid-flow-col grid-rows-2 grid-cols-1 w-full h-full">
-            <div class="flex row-span-1 w-full">
-                <AppMap :currentStep="currentStep" @save-stop="handleSaveStop"/>
-            </div>
-            <div class="flex row-span-1 w-full">
-                <div v-if="currentStep === 1" class="w-full">
-                    <EditLineStepOne :line="line" @update-line="handleUpdateLine" />
-                </div>
-                <div v-else-if="currentStep === 2" class="w-full">
-                    <EditLineStepTwo :directions="directions" @generate-routes="handleGenerateRoutes"/>
-                </div>
-                <div v-else-if="currentStep === 3" class="w-full">
-                    <EditLineStepThree :directions="directions" @save-line="handleSaveLine"/>
-                </div>
-            </div>
-        </div>
+    <div class="absolute top-12 bottom-0 start-0 end-0 flex flex-col">
+        <Stepper class="mx-4 mt-3 h-full flex flex-col" :value="currentStep" linear>
+            <StepList>
+                <Step :value="1">Informazioni generali</Step>
+                <Step :value="2">Percorsi</Step>
+                <Step :value="3">Orari</Step>
+            </StepList>
+            <StepPanels class="grow flex flex-col">
+                <StepPanel :value="1">
+                    <EditLineStepOne v-model="busLine" />
+                    <div class="flex flex-row justify-end">
+                        <Button label="Avanti" icon="pi pi-arrow-right" iconPos="right" @click="currentStep++" />
+                    </div>
+                </StepPanel>
+                <StepPanel :value="2" class="flex flex-col grow">
+                    <!-- DO NOT REMOVE v-if in the component undearneath. Without it the map is not loaded correctly! -->
+                    <EditLineStepTwo v-if="currentStep == 2" v-model="busLine" class="grow" />
+                    <div class="flex justify-between">
+                        <Button label="Indietro" severity="secondary" icon="pi pi-arrow-left" @click="currentStep = 1" />
+                        <Button label="Avanti" icon="pi pi-arrow-right" iconPos="right" @click="currentStep = 3" />
+                    </div>
+                </StepPanel>
+                <StepPanel :value="3">
+                    <EditLineStepThree v-model="busLine" />
+                    <div class="flex justify-between">
+                        <Button label="Indietro" severity="secondary" icon="pi pi-arrow-left" @click="currentStep = 2" />
+                        <Button label="Salva" icon="pi pi-save" iconPos="right" @click="saveBusLine" />
+                    </div>
+                </StepPanel>
+            </StepPanels>
+        </Stepper>
     </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import Timeline from 'primevue/timeline';
 import EditLineStepOne from '@/views/line/components/EditLineStepOne.vue';
 import EditLineStepTwo from '@/views/line/components/EditLineStepTwo.vue';
 import EditLineStepThree from '@/views/line/components/EditLineStepThree.vue';
-import { BusStopService } from '@/service/BusStopService';
 import { BusLineService } from '@/service/BusLineService';
+import { useToast } from 'primevue';
 
 
 const currentStep = ref(1);
+const toast = useToast();
 
-const busLine = ref('');
+const busLine = ref({
+    name: '',
+    directions: []
+});
 
-const directions = ref([])
-
-
-
-const handleUpdateLine = (data) => {
-    busLine.value = data.name;
-    data.directions.forEach(direction => {
-        directions.value.push({
-            name: direction.name,
-            stops: [],
-            timetable: [],
-            fullRoute: []
-        })
-    });
-    currentStep.value++;
-};
-
-const handleSaveStop = async (data) => {
-    try {
-        await BusStopService.saveBusStop(data);
-    } catch (error) {
-        console.error('Error saving bus stop:', error);
-    }
-}
-
-const handleGenerateRoutes = () => {
-    currentStep.value++
-}
-
-const handleSaveLine = async () => {
+const saveBusLine = async () => {
     const data = {
-        name: busLine.value,
-        directions: directions.value
+        name: busLine.value.name,
+        directions: busLine.value.directions.map(dir => {
+            return {
+                name: dir.name,
+                stops: dir.stops.map(stop => {
+                    if (stop.id) {
+                        return stop.id
+                    }
+                    return stop;
+                }),
+                routeLegs: dir.routeLegs,
+                timetable: dir.timetable
+            }
+        })
     }
-    console.log(data)
-    try{
+    try {
         await BusLineService.createNewBusLine(data)
-        console.log('Nuova Linea salvata');
-    } catch (error) {
-        console.error('Error saving bus stop:', error);
+        toast.add({severity: 'error', summary: 'Creazione linea completata. Verrai reindirizzato automaticamente', life: 3000 });
+        setTimeout(() => {}, 3000);
+    } catch (err) {
+        toast.add({severity: 'error', summary: err, life: 3000 })
     }
 }
 
