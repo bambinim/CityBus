@@ -9,7 +9,6 @@ exports.createNewLine = async (req, res) => {
             return res.status(400).json({ message: "Name and at least one direction are required." });
         }
 
-        // Creazione dell'oggetto BusLine con i dati ricevuti
         const newBusLine = new BusLine({ name, directions });
         await newBusLine.save();
         for (const direction of newBusLine.directions) {
@@ -26,3 +25,41 @@ exports.createNewLine = async (req, res) => {
         res.status(500).json({ message: "Error creating a new bus line", error: error.message });
     }
 };
+
+exports.getBusLines = async (req, res) => {
+    try{
+        const {search} = req.query
+        const query = {}
+        if(search){
+            query.name = { $regex: search, $options: 'i'}
+        }
+
+        const busLines = await BusLine.find(query)
+        const response = busLines.map(line => ({
+            id: line._id,
+            name: line.name
+        }))
+        res.status(200).json(response)
+    }catch(error){
+        res.status(500).send({message: 'Internal Server Error'})
+    }
+}
+
+exports.deleteBusLine = async (req, res) => {
+    const busLineId = req.params.id
+
+    try{
+        const busLine = await BusLine.findById(busLineId)
+
+        if(!busLine){
+            return res.status(404).json({ message: 'Bus line not found' });
+        }
+
+        await BusLine.deleteOne({_id: busLineId})
+        res.status(200).send({
+            message: "Resource deleted successfully",
+        });
+    }catch(error){
+        res.status(500).send({message: 'Internal Server Error'})
+    }
+}

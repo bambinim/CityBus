@@ -1,6 +1,6 @@
 const { query } = require('express')
 const {BusStop} = require('../database')
-const {BusLines} = require('../database')
+
 
 
 exports.getBusStops = async (req, res) => {
@@ -63,7 +63,7 @@ exports.getBusStopInformation = async (req,res) => {
                 }))
             }))
         }
-        res.json(response)
+        res.status(200).json(response)
     }catch (error) {
         console.error('Error fetching bus stop:', error);
         res.status(500).json({ message: 'Error processing your request' });
