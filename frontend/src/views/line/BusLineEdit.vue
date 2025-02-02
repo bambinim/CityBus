@@ -1,23 +1,37 @@
 <template>
     <Toast />
     <AppMenu />
-    <div class="flex flex-col items-center justify-center w-full h-full">
-        <div class="grid grid-flow-col grid-rows-2 grid-cols-1 w-full h-full">
-            <div class="flex row-span-1 w-full">
-                <AppMap :currentStep="currentStep" @save-stop="handleSaveStop"/>
-            </div>
-            <div class="flex row-span-1 w-full">
-                <div v-if="currentStep === 1" class="w-full">
-                    <EditLineStepOne @next-step="handleNextStep"/>
-                </div>
-                <div v-else-if="currentStep === 2" class="w-full">
-                    <EditLineStepTwo @next-step="handleNextStep"/>
-                </div>
-                <div v-else-if="currentStep === 3" class="w-full">
-                    <EditLineStepThree @save-line="handleSaveLine"/>
-                </div>
-            </div>
-        </div>
+    <div class="absolute top-12 bottom-0 start-0 end-0 flex flex-col">
+        <Stepper class="mx-4 mt-3 h-full flex flex-col" :value="currentStep" linear>
+            <StepList>
+                <Step :value="1">Informazioni generali</Step>
+                <Step :value="2">Percorsi</Step>
+                <Step :value="3">Orari</Step>
+            </StepList>
+            <StepPanels class="grow flex flex-col">
+                <StepPanel :value="1">
+                    <EditLineStepOne v-model="busLine" />
+                    <div class="flex flex-row justify-end">
+                        <Button label="Avanti" icon="pi pi-arrow-right" iconPos="right" @click="currentStep++" />
+                    </div>
+                </StepPanel>
+                <StepPanel :value="2" class="flex flex-col grow">
+                    <!-- DO NOT REMOVE v-if in the component undearneath. Without it the map is not loaded correctly! -->
+                    <EditLineStepTwo v-if="currentStep == 2" v-model="busLine" class="grow" />
+                    <div class="flex justify-between">
+                        <Button label="Indietro" severity="secondary" icon="pi pi-arrow-left" @click="currentStep = 1" />
+                        <Button label="Avanti" icon="pi pi-arrow-right" iconPos="right" @click="currentStep = 3" />
+                    </div>
+                </StepPanel>
+                <StepPanel :value="3">
+                    <EditLineStepThree v-model="busLine" />
+                    <div class="flex justify-between">
+                        <Button label="Indietro" severity="secondary" icon="pi pi-arrow-left" @click="currentStep = 2" />
+                        <Button label="Salva" icon="pi pi-save" iconPos="right" @click="saveBusLine" />
+                    </div>
+                </StepPanel>
+            </StepPanels>
+        </Stepper>
     </div>
 </template>
 
@@ -26,43 +40,41 @@ import { ref } from 'vue'
 import EditLineStepOne from '@/views/line/components/EditLineStepOne.vue';
 import EditLineStepTwo from '@/views/line/components/EditLineStepTwo.vue';
 import EditLineStepThree from '@/views/line/components/EditLineStepThree.vue';
-import { BusStopService } from '@/service/BusStopService';
 import { BusLineService } from '@/service/BusLineService';
-import { useBusLineStore } from '@/stores/line';
-import { useToast } from 'primevue/usetoast';
-import { useRouter } from 'vue-router'
-
-const toast = useToast();
-const router = useRouter();
-const store = useBusLineStore();
+import { useToast } from 'primevue';
 
 
 const currentStep = ref(1);
+const toast = useToast();
 
-const handleNextStep = () => {
-    currentStep.value++
-}
+const busLine = ref({
+    name: '',
+    directions: []
+});
 
-const handleSaveStop = async (data) => {
-    try {
-        await BusStopService.saveBusStop(data);
-    } catch (error) {
-        console.error('Error saving bus stop:', error);
+const saveBusLine = async () => {
+    const data = {
+        name: busLine.value.name,
+        directions: busLine.value.directions.map(dir => {
+            return {
+                name: dir.name,
+                stops: dir.stops.map(stop => {
+                    if (stop.id) {
+                        return stop.id
+                    }
+                    return stop;
+                }),
+                routeLegs: dir.routeLegs,
+                timetable: dir.timetable
+            }
+        })
     }
-}
-
-const handleSaveLine = async () => {
-    try{
-        store.prepareData()
-        await BusLineService.createNewBusLine(store.line);
-        store.clearLine();
-        toast.add({severity: 'success', summary: 'Nuova linea salvata con successo', life: 3000 })
-        setTimeout(() => {
-            router.push({ path: '/home' })
-        }, 3000);
-    } catch (error) {
-        toast.add({ severity: 'warn', summary: 'Attenzione', detail: 'Errore nel salvataggio della linea', life: 3000 });
-        return
+    try {
+        await BusLineService.createNewBusLine(data)
+        toast.add({severity: 'error', summary: 'Creazione linea completata. Verrai reindirizzato automaticamente', life: 3000 });
+        setTimeout(() => {}, 3000);
+    } catch (err) {
+        toast.add({severity: 'error', summary: err, life: 3000 })
     }
 }
 

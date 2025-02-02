@@ -12,6 +12,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 import '@/assets/styles.scss';
 import '@/assets/tailwind.css';
+import "leaflet/dist/leaflet.css";
 
 const app = createApp(App);
 const pinia = createPinia();

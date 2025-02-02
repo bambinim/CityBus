@@ -1,94 +1,92 @@
 <template>
-    <Toast />
-    <TabView :scrollable="true">
-        <TabPanel v-for="(direction, indexDir) in directions" :key="indexDir" :header="direction.name">
-            <Splitter>
-                <SplitterPanel class="flex flex-col w-full h-full">
-                    <div class="flex flex-col w-full">
-                        <h2 class="mb-4">Fermate {{ direction.name }}</h2>
-                        <ul class="list-group">
-                            <div v-for="(stop, indexStop) in directions[indexDir].stops" :key="indexStop" class="w-full">
-                                <li class="list-group-item flex flex-row m-2 w-full">
-                                    <AutoComplete v-model="stop.query" optionLabel="name" :invalid="!stop" :suggestions="stop.filteredStops" @complete="searchStops(indexDir, indexStop)" @item-select="selectStop(indexDir, indexStop)" placeholder="Nome fermata" type="text" size="small"/>
-                                    <Button icon="pi pi-minus" class="p-button-danger" @click="removeStop(indexDir, indexStop)" size="small"/>
-                                </li>
+    <div class="grid grid-cols-2 grid-rows-2">
+        <LineEditMap v-model="busLine" :direction-index="currentTab" class="col-span-2 2xl:col-span-1"/>
+        <Tabs class="col-span-2 2xl:col-span-1 flex flex-col" v-model:value="currentTab">
+            <TabList>
+                <Tab v-for="(direction, indexDir) in busLine.directions" :value="indexDir">{{ direction.name }}</Tab>
+            </TabList>
+            <TabPanels class="grow h-full">
+                <TabPanel v-for="(direction, indexDir) in busLine.directions" :value="indexDir" class="h-full">
+                    <div class="flex flex-row justify-between w-auto h-full">
+                        <div class="w-full max-h-full" style="overflow: auto;">
+                            <h2 class="text-lg">Fermate</h2>
+                            <draggable class="mt-3" tag="ul" v-model="busLine.directions[currentTab].stops" item-key="id">
+                                <template #item="{ element: stop }">
+                                    <li class="flex flex-row justify-between items-center border-black border rounded-md px-3 mb-1 cursor-grab">
+                                        <font-awesome-icon :icon="faBars" />
+                                        <span>{{ stop.name }}</span>
+                                        <Button icon="pi pi-trash" severity="danger" variant="text" rounded aria-label="Elimina" @click="removeStop(stop)" />
+                                    </li>
+                                </template>
+                            </draggable>
+                            <div class="flex flex-col">
+                                <!-- <Button icon="pi pi-plus" class="mt-3" label="Aggiungi fermata esistente" severity="secondary" />-->
+                                <StopSelector @stop-selected="el => busLine.directions[currentTab].stops.push(el)" />
+                                <Button class="mt-3" label="Genera percorso" @click="generateRoute">
+                                    <template #icon>
+                                        <font-awesome-icon :icon="faRoute" />
+                                    </template>
+                                </Button>
                             </div>
-                            <Button label="Aggiungi fermata" severity="secondary" class="flex flex-col w-full m-2" size="small"  @click="addStop(indexDir)"/>
-                            <Button label="Genera percorsi" severity="contrast" class="flex flex-col w-full m-2" size="small"  @click="generateRoutes()"/>
-                        </ul>
+                        </div>
+                        <Divider layout="vertical" />
+                        <div class="w-full">
+                            <h2 class="text-lg">Tempi di percorrenza</h2>
+                            <Timeline :value="busLine.directions[currentTab].stops" layout="vertical" class="mt-2">
+                                <template #content="slotProps">
+                                    <div class="grid grid-rows-2 h-full">
+                                        <span class="font-bold">{{ slotProps.item.name }}</span>
+                                        <span
+                                            v-if="busLine.directions[currentTab].routeLegs.length > slotProps.index"
+                                            >
+                                            {{ Math.floor(busLine.directions[currentTab].routeLegs[slotProps.index].duration / 60) }}m {{ Math.round(busLine.directions[currentTab].routeLegs[slotProps.index].duration % 60) }}s
+                                        </span>
+                                    </div>
+                                </template>
+                            </Timeline>
+                        </div>
                     </div>
-                </SplitterPanel>
-                <SplitterPanel class="flex flex-col w-full h-full">
-                    <h2 class="mb-4 ml-4">Tempi di percorrenza</h2>
-                    <Timeline :value="directions[indexDir].stops" layout="vertical" align="top" class="flex flex-col w-full">
-                        <template #content="slotProps">
-                            {{ slotProps.item.name }}
-                        </template>
-                        <template #opposite="slotProps">
-                            <small class="p-text-secondary"> {{ Math.floor(slotProps.item.timeToNext / 60) }} </small>
-                        </template>
-                    </Timeline>
-                </SplitterPanel>
-            </Splitter>
-        </TabPanel>
-    </TabView>
-    <Button label="Avanti" size="small" @click="submit" :disabled="!isRoutesGenerated"/>
+                </TabPanel>
+            </TabPanels>
+        </Tabs>
+    </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { useToast } from 'primevue/usetoast';
 import { BusStopService } from '@/service/BusStopService';
-import { useBusLineStore } from '@/stores/line';
+import { RoutingService } from '@/service/RoutingService';
+import { RoutingDataElaborator } from '@/utils/RoutingDataElaborator';
+import LineEditMap from '@/views/line/components/LineEditMap.vue'
+import { faBars, faRoute } from '@fortawesome/free-solid-svg-icons'
+import { useToast } from 'primevue/usetoast';
+import StopSelector from './StopSelector.vue';
 
-const emits = defineEmits(['next-step']);
 const toast = useToast();
 
-const store = useBusLineStore();
-const directions = store.line.directions;
+const busLine = defineModel()
+const currentTab = ref(0)
 
-const isRoutesGenerated = ref(false)
-
-const searchStops = async (indexDir, indexStop) => {
-  try {
-    const q = {
-        search: directions[indexDir].stops[indexStop].query
-    }
-    const stops = await BusStopService.searchBusStops(q);
-    store.updateStopSuggestions(indexDir, indexStop, stops);
-  } catch (error) {
-    toast.add({ severity: 'error', summary: 'Errore', detail: 'Errore nel recupero delle fermate', life: 3000 });
-    console.error('Error fetching stops:', error);
-  }
-};
-
-const addStop = (directionIndex) => {
-  store.addStop(directionIndex);
-};
-
-const selectStop = (indexDir, indexStop) => {
-    store.selectStop(indexDir, indexStop, directions[indexDir].stops[indexStop].query);
+const removeStop = (stop) => {
+    const index = busLine.value.directions[currentTab.value].stops.indexOf(stop);
+    busLine.value.directions[currentTab.value].stops.splice(index, 1);
 }
 
-const removeStop = (indexDir, indexStop) => {
-  store.removeStop(indexDir, indexStop);
-};
-
-const generateRoutes = () => {
-    if (directions.some(dir => dir.stops.length < 2)) {
-        toast.add({ severity: 'warn', summary: 'Attenzione', detail: 'Inserisci almeno due fermate valide per ogni direzione per generare i percorsi.', life: 3000 });
+const generateRoute = async () => {
+    const direction = busLine.value.directions[currentTab.value];
+    let route = undefined;
+    try {
+        route = await RoutingService.calculateRoute(direction.stops.map(stop => stop.location))
+    } catch {
+        toast.add({severity: 'error', summary: 'C\'è stato un errore durante il calcolo del percorso', life: 3000 })
         return;
-    }else if(directions.some(dir => dir.stops.some(stop => !stop.name.trim())) 
-            || directions.some(dir => dir.stops.some(stop => stop.name != stop.query))){
-        toast.add({ severity: 'warn', summary: 'Attenzione', detail: 'Fermate non valide.', life: 3000 });
-        return
     }
-    store.generateRoutes();
-    isRoutesGenerated.value = true
-};
-
-const submit = () => {
-    emits('next-step')
+    busLine.value.directions[currentTab.value].routeLegs = route.legs.map(leg => {
+        return {
+            duration: leg.duration,
+            steps: leg.steps.map(step => {return {geometry: step.geometry, duration: step.duration}})
+        }
+    })
 }
 
 </script>

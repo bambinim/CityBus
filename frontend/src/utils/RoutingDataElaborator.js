@@ -1,11 +1,7 @@
-
-
-
 export const RoutingDataElaborator = {
 
     elaborateFullRoute(routeData) {
-        console.log(routeData)
-        return routeData.map(leg => ({
+        return routeData.legs.map(leg => ({
             duration: leg.duration,
             geometry: {
                 type: "LineString",
@@ -15,7 +11,7 @@ export const RoutingDataElaborator = {
     },
 
     elaborateRouteStep(routeData) {
-        return routeData.map(leg => ({
+        return routeData.legs.map(leg => ({
             routeToNext: {
                 duration: leg.duration,
                 geometry: {

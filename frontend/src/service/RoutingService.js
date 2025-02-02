@@ -1,25 +1,14 @@
 import requests from "@/lib/requests";
 
-export const RoutingService = {
-    
-    async calculateRoute(coordinates) {
-        const coordinateString = coordinates.map(coord => coord.coordinates.join(',')).join(';');
-        console.log(coordinateString)
-        let msg = ''
-        let queryParams = [];
+const DRIVING_END_POINT = `https://routing.openstreetmap.de/routed-car/route/v1/driving/`
 
-        queryParams.push(`stops=${coordinateString}`);
-        console.log(queryParams)
-        try{
-            const res = await requests.get(`/routes/busline?${queryParams}`, {authenticated: true})
-            console.log(res)
-            if (res.status == 200) {
-                return res.data;
-            }
-            msg = 'Non è stato possibile generare la route'
-        }catch{
-            msg = 'Errore nella richiesta'
-        }
-        throw msg
+export const RoutingService = {
+
+    async calculateRoute(points) {
+        const coordinateString = points.map(point => point.coordinates.join(',')).join(';');
+
+        const endpoint = `${DRIVING_END_POINT}/${coordinateString}?overview=false&geometries=geojson&steps=true`
+        const response = await requests.get(endpoint, {authenticated: false});
+        return response.data.routes[0];
     }
 }
