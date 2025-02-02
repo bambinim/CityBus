@@ -42,8 +42,9 @@ import EditLineStepTwo from '@/views/line/components/EditLineStepTwo.vue';
 import EditLineStepThree from '@/views/line/components/EditLineStepThree.vue';
 import { BusLineService } from '@/service/BusLineService';
 import { useToast } from 'primevue';
+import { useRouter } from 'vue-router'
 
-
+const router = useRouter();
 const currentStep = ref(1);
 const toast = useToast();
 
@@ -59,8 +60,8 @@ const saveBusLine = async () => {
             return {
                 name: dir.name,
                 stops: dir.stops.map(stop => {
-                    if (stop.id) {
-                        return stop.id
+                    if (stop.stopId) {
+                        return stop.stopId
                     }
                     return stop;
                 }),
@@ -71,8 +72,10 @@ const saveBusLine = async () => {
     }
     try {
         await BusLineService.createNewBusLine(data)
-        toast.add({severity: 'error', summary: 'Creazione linea completata. Verrai reindirizzato automaticamente', life: 3000 });
-        setTimeout(() => {}, 3000);
+        toast.add({severity: 'success', summary: 'Creazione linea completata. Verrai reindirizzato automaticamente', life: 3000 });
+        setTimeout(() => {
+            router.push({ path: '/home' })
+        }, 3000);
     } catch (err) {
         toast.add({severity: 'error', summary: err, life: 3000 })
     }

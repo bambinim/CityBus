@@ -69,21 +69,3 @@ exports.getBusStopInformation = async (req,res) => {
         res.status(500).json({ message: 'Error processing your request' });
     }
 }
-
-
-exports.saveBusStops = async (req,res) => {
-    const {name, coordinates} = req.body
-    try{
-        const stop = new BusStop({
-            name: name,
-            location: {
-                type: "Point",
-                coordinates: coordinates
-            }
-        })
-        await stop.save()
-        res.status(201).send("Stop created successfully")
-    }catch (error) {
-        res.status(500).send({message: 'Internal Server Error'})
-    }
-}

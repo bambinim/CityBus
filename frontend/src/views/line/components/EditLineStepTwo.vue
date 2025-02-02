@@ -74,19 +74,12 @@ const removeStop = (stop) => {
 
 const generateRoute = async () => {
     const direction = busLine.value.directions[currentTab.value];
-    let route = undefined;
     try {
-        route = await RoutingService.calculateRoute(direction.stops.map(stop => stop.location))
+        busLine.value.directions[currentTab.value].routeLegs = await RoutingService.calculateRoute(direction.stops.map(stop => stop.location))
     } catch {
         toast.add({severity: 'error', summary: 'C\'è stato un errore durante il calcolo del percorso', life: 3000 })
         return;
     }
-    busLine.value.directions[currentTab.value].routeLegs = route.legs.map(leg => {
-        return {
-            duration: leg.duration,
-            steps: leg.steps.map(step => {return {geometry: step.geometry, duration: step.duration}})
-        }
-    })
 }
 
 </script>

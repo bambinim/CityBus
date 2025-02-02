@@ -5,10 +5,19 @@ const DRIVING_END_POINT = `https://routing.openstreetmap.de/routed-car/route/v1/
 export const RoutingService = {
 
     async calculateRoute(points) {
+        let queryParams = [];
         const coordinateString = points.map(point => point.coordinates.join(',')).join(';');
 
-        const endpoint = `${DRIVING_END_POINT}/${coordinateString}?overview=false&geometries=geojson&steps=true`
-        const response = await requests.get(endpoint, {authenticated: false});
-        return response.data.routes[0];
+        queryParams.push(`stops=${coordinateString}`);
+        try{
+            const res = await requests.get(`/routes/busline?${queryParams}`, {authenticated: true})
+            if (res.status == 200) {
+                return res.data;
+            }
+            msg = 'Non è stato possibile generare la route'
+        }catch{
+            msg = 'Errore nella richiesta'
+        }
+        throw msg
     }
 }
