@@ -4,6 +4,7 @@ import RegistrationView from '@/views/auth/Registration.vue'
 import TemplateView from '@/views/TemplateView.vue'
 import BusLineEditView from '@/views/line/BusLineEdit.vue'
 import DeparturesView from '@/views/departures/Departures.vue'
+import RidesMap from '@/views/RidesMap.vue'
 import { useUserStore } from '@/stores/user'
 import { UsersService } from '@/service/UsersService'
 
@@ -16,6 +17,7 @@ const router = createRouter({
     {path: '/line/new', component:BusLineEditView, meta: {requiresAuth: true, restrictTo: ['admin']}},
     {path: '/line/edit/:id', component:BusLineEditView, meta: {requiresAuth: true, restrictTo: ['admin']}},
     {path: '/departures', component: DeparturesView, meta: {requiresAuth: true}},
+    {path: '/rides-map', component: RidesMap, meta: {requiresAuth: true, restrictTo: ['admin']}}
   ],
 })
 
