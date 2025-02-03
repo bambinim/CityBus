@@ -41,7 +41,7 @@ const directionSchema = new Schema({
         name: {type: String, required: true},
         routeToNext: {type: [routeStepSchema], required: true, default: undefined},
         timeToNext: {type: Number, required: true}
-    })], required: true, default: undefined},
+    }, {_id: false})], required: true, default: undefined},
     timetable: {type: [[timeSchema]], required: true, default: undefined},
     fullRoute: {type: [routeStepSchema], required: true, default: undefined}
 });

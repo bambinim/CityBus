@@ -53,5 +53,27 @@ module.exports = {
         } catch (error) {
             Logger.debug('Errore nella verifica della password:', error);
         }
-    }
+    },
+    socketAllowedRoles: (authorizedRoles=["user", "driver", "admin"]) => {
+        Logger.debug("Authorization middleware called");
+        return (socket, next) => {
+            const authHeaderContent = socket.headers.get("Authorization");
+            if (!authHeaderContent) {
+                next(new Error("User not authenticated"))
+                return;
+            }
+            try {
+                const decoded = jwt.verify(authHeaderContent.replace("Bearer ", ""), config.APP_SECRET);
+                if (!authorizedRoles.includes(decoded.role)) {
+                    next(new Error("User not authorized"))
+                    return
+                }
+                console.log(decoded)
+            } catch (error) {
+                next(new Error("User not authenticated"))
+                return;
+            }
+            next();
+        }
+    },
 }

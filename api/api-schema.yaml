@@ -911,6 +911,40 @@ paths:
           $ref: "#/components/responses/401Unauthorized"
         '500':
           $ref: "#/components/responses/500InternalServerError"
+    post:
+      summary: Create new bus ride
+      tags:
+        - busride
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                directionId:
+                  type: string
+                departureTime:
+                  $ref: "#/components/schemas/Time"
+      responses:
+        '200':
+          description: Bus ride created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rideId:
+                    type: string
+        '400':
+          $ref: "#/components/responses/400BadRequest"
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '403':
+          $ref: "#/components/responses/403Forbidden"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
   /rides/{busRideId}:
     get:
       summary: Retrieve informations about specified bus ride

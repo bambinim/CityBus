@@ -73,3 +73,9 @@ services:
       - ./osrm:/data/osrm
     networks:
       - osrm-backend
+
+  redis:
+    image: redis:7.4
+    restart: unless-stopped
+    networks:
+      - default
