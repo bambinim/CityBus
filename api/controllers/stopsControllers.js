@@ -1,5 +1,8 @@
 const { query } = require('express')
 const {BusStop} = require('../database')
+const {BusLine} = require('../database')
+const {BusRide} = require('../database')
+const { RideData } = require("../lib/RedisRide")
 
 
 
@@ -64,6 +67,70 @@ exports.getBusStopInformation = async (req,res) => {
             }))
         }
         res.status(200).json(response)
+    }catch (error) {
+        console.error('Error fetching bus stop:', error);
+        res.status(500).json({ message: 'Error processing your request' });
+    }
+}
+
+exports.getDepartures = async (req, res) => {
+    const busStopId = req.params.id
+    const departure_timestamp = req.query.departure_timestamp
+
+    try{
+
+        const stop = await BusStop.findById(busStopId)
+
+        if (!stop) {
+            return res.status(404).json({ message: 'Bus stop not found' });
+        }
+
+        const response = await Promise.all(stop.connectedLineDirections.map(async direction => {
+            const line = await BusLine.findOne({ 'directions._id': direction }, 'name directions.$');
+
+            if (!line) {
+                return null;
+            }
+
+            const dir = line.directions[0]
+
+            const ride = await BusRide.findOne({
+                lineId: line._id, 
+                directionId: dir._id,
+                stops: {
+                    $elemMatch: {
+                        stopId: stop._id,
+                        expectedArrivalTimestamp: { $gte: departure_timestamp }
+                    }
+                }
+            });
+
+            const rideData = new RideData()
+            await rideData.connect()
+
+
+            const redisData = await rideData.getRide(ride._id.toString());
+            if (!redisData) {
+                throw new Error('Ride data not available.');
+            }
+
+            const stopInfo = ride.stops.find(stop => stop.stopId.toString() === busStopId);
+
+            return {
+                id: line._id,
+                name: line.name,
+                direction: {
+                    id: dir._id,
+                    name: dir.name,
+                    rideId: ride._id,
+                    scheduledArrivalTimestamp: stopInfo.expectedArrivalTimestamp,
+                    delay: redisData.minutesLate
+                }
+            };
+        }))
+
+        res.status(200).json(response)
+
     }catch (error) {
         console.error('Error fetching bus stop:', error);
         res.status(500).json({ message: 'Error processing your request' });

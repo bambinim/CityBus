@@ -176,7 +176,6 @@ exports.editBusLine = async (req, res) => {
                 }else{
                     stopDoc = await BusStop.findOneAndUpdate({name: stop.name, location: stop.location}, { $pull: { connectedLineDirections: { $in: directionId } } }, {returnNewDocument: true})
                 }
-                console.log(stopDoc)
                 
                 if(!stopDoc){
                     stopDoc = await new BusStop({name: stop.name, location: stop.location}).save()

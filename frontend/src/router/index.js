@@ -3,6 +3,7 @@ import LoginView from '@/views/auth/Login.vue'
 import RegistrationView from '@/views/auth/Registration.vue'
 import TemplateView from '@/views/TemplateView.vue'
 import BusLineEditView from '@/views/line/BusLineEdit.vue'
+import DeparturesView from '@/views/departures/Departures.vue'
 import { useUserStore } from '@/stores/user'
 import { UsersService } from '@/service/UsersService'
 
@@ -13,7 +14,8 @@ const router = createRouter({
     {path: '/registration', component: RegistrationView},
     {path: '/home', component: TemplateView, meta: {requiresAuth: true}},
     {path: '/line/new', component:BusLineEditView, meta: {requiresAuth: true, restrictTo: ['admin']}},
-    {path: '/line/edit/:id', component:BusLineEditView, meta: {requiresAuth: true, restrictTo: ['admin']}}
+    {path: '/line/edit/:id', component:BusLineEditView, meta: {requiresAuth: true, restrictTo: ['admin']}},
+    {path: '/departures', component: DeparturesView, meta: {requiresAuth: true}},
   ],
 })
 

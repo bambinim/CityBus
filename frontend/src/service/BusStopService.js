@@ -42,6 +42,21 @@ export const BusStopService = {
             msg = 'Errore nella richiesta'
         }
         throw msg
+    },
+    async getDepartures(data){
+        let msg = ''
+        const{stopId, departureTimeStamp} = data
+
+        try{
+            const res = await requests.get(`/stops/${stopId}/departures?departure_timestamp=${departureTimeStamp}`, {authenticated: true})
+            if (res.status == 200) {
+                return res.data;
+            }
+            msg = 'Nessuna fermata trovata'
+        }catch{
+            msg = 'Errore nella richiesta'
+        }
+        throw msg
     }
 
 }
