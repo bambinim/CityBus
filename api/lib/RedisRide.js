@@ -1,12 +1,12 @@
 const { createClient } = require('redis')
 const config = require("../config")
-const logging = require("./logging");
+const logging = require("../logging");
 const Logger = logging.Logger
 
 class RideData {
     constructor() {
         this.client = createClient({url: config.REDIS_URL})
-        this.client.on('error', err => {Logger.error("Failed to connect to Redis")})
+        this.client.on('error', err => {Logger.error(`Failed to connect to Redis: ${err}`)})
     }
 
     async connect() {
@@ -17,9 +17,9 @@ class RideData {
         await this.client.del([rideId])
     }
 
-    async setRide(rideId, { position, isLate, timeToNextStop }) {
-        await this.client.set(rideId, JSON.stringify({ position, isLate, timeToNextStop }))
-        await this.client.publish(`${rideId}/update`, JSON.stringify({ position, isLate, timeToNextStop }))
+    async setRide(rideId, { position, minutesLate, timeToNextStop, nextStop }) {
+        await this.client.set(rideId, JSON.stringify({ position, minutesLate, timeToNextStop, nextStop }))
+        await this.client.publish(`${rideId}:update`, JSON.stringify({ position, minutesLate, timeToNextStop, nextStop }))
     }
 
     async getRide(rideId) {

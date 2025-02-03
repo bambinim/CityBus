@@ -30,6 +30,7 @@ function routerSetup() {
     const stopsRoutes = require('./routes/stopsRoutes')
     const linesRoutes = require('./routes/linesRoutes')
     const routesRoutes = require('./routes/routesRoutes')
+    const ridesRoutes = require('./routes/ridesRoutes')
     app.use("/", router);
     app.use(bodyParser.json({ limit: '50mb' }));
     app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
@@ -38,6 +39,7 @@ function routerSetup() {
     app.use('/stops', stopsRoutes);
     app.use('/lines', linesRoutes);
     app.use('/routes', routesRoutes)
+    app.use('/rides', ridesRoutes)
 }
 
 async function runDevelopmentServer() {
