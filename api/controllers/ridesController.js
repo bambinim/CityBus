@@ -3,7 +3,7 @@ const { BusLine, BusStop, BusRide } = require('../database');
 const { RideData } = require("../lib/RedisRide")
 
 exports.createNewRide = async (req, res) => {
-    //try {
+    try {
         const body = req.body
         if (!(body.directionId && body.departureTime)) {
             res.status(400).json({message: 'Some parameters are missing'})
@@ -50,7 +50,38 @@ exports.createNewRide = async (req, res) => {
             nextStop: {stopId: ride.stops[1].stopId, name: ride.stops[1].name}
         })
         res.json({rideId: ride._id})
-    //} catch (err) {
-    //    res.status(500).json({message: `Internal server error: ${err}`})
-    //}
+    } catch (err) {
+        res.status(500).json({message: `Internal server error: ${err}`})
+    }
+}
+
+exports.getRidesList = async (req, res) => {
+    try {
+        const filters = { status: 'running' }
+        if (req.query.line) {
+            filters.lineId = req.query.line
+        }
+        if (req.query.direction) {
+            filters.directionId = req.query.direction
+        }
+        const rides = await BusRide.find(filters).populate('lineId', ['name', 'directions._id', 'directions.name']).exec()
+        console.log(rides[0].lineId.directions)
+        res.json(rides.map(ride => {
+            return {
+                id: ride._id,
+                line: {
+                    id: ride.lineId._id,
+                    name: ride.lineId.name,
+                    direction: ride.lineId.directions.filter(dir => dir._id.toString() == ride.directionId.toString()).map(dir => {
+                        return {
+                            id: dir._id,
+                            name: dir.name
+                        }
+                    })[0]
+                }
+            }
+        }))
+    } catch (err) {
+        res.status(500).json({message: `Internal server error: ${err}`})
+    }
 }
