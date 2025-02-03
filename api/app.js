@@ -1,10 +1,14 @@
 const express = require("express");
+const http = require('http');
+const { Server } = require("socket.io")
 const mongoose = require("mongoose");
 const config = require("./config");
 const logging = require("./logging");
 const bodyParser = require('body-parser');
 
 const app = express()
+const server = http.createServer(app)
+const io = new Server(server)
 const Logger  = logging.Logger;
 
 
@@ -42,17 +46,23 @@ function routerSetup() {
     app.use('/rides', ridesRoutes)
 }
 
+function socketsSetup() {
+    const { ridePosition } = require("./controllers/socketsController")
+    io.of(/^\/rides\/[a-z 0-9]{24}\/position$/).on('connection', ridePosition)
+}
+
 async function runDevelopmentServer() {
     Logger.info("Starting development server")
     await connectToMongo();
     createCollections();
     routerSetup();
+    socketsSetup();
     const fs = require("fs");
     const YAML = require("yaml");
     const swaggerUi = require("swagger-ui-express");
     const apiSchema = fs.readFileSync("./api-schema.yaml", "utf-8");
     app.use("/ui", swaggerUi.serve, swaggerUi.setup(YAML.parse(apiSchema)));
-    app.listen(3001, () => {
+    server.listen(3001, () => {
         Logger.info(`Development server listening on port ${3001}`);
     })
 }

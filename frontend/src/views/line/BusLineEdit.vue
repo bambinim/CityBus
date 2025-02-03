@@ -79,7 +79,23 @@ const saveBusLine = async () => {
                     }
                     return stop;
                 }),
-                routeLegs: dir.routeLegs,
+                routeLegs: dir.routeLegs.map(leg => {
+                    leg.steps = leg.steps.map(step => {
+                        const newCoordinates = []
+                        step.geometry.coordinates.forEach((coord, index) => {
+                            if (index == 0) {
+                                newCoordinates.push(coord)
+                                return
+                            }
+                            if (JSON.stringify(coord) != JSON.stringify(step.geometry.coordinates[index - 1])) {
+                                newCoordinates.push(coord)
+                            }
+                        })
+                        step.geometry.coordinates = newCoordinates
+                        return step
+                    }).filter(step => step.geometry.coordinates.length > 2)
+                    return leg
+                }),
                 timetable: dir.timetable
             }
         })
