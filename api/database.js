@@ -31,7 +31,7 @@ const lineStringSchema = new Schema({
 }, {_id: false});
 const routeStepSchema = new Schema({
     duration: {type: Number, required: true},
-    geometry: {type: lineStringSchema, required: true}
+    geometry: {type: lineStringSchema, required: true, index: '2dsphere'}
 }, {_id: false});
 
 const directionSchema = new Schema({
@@ -53,7 +53,7 @@ const busLineSchema = new Schema({
 
 const busStopSchema = new Schema({
     name: {type: String, required: true},
-    location: {type: pointSchema, required: true},
+    location: {type: pointSchema, required: true, index: '2dsphere'},
     connectedLineDirections: {type: [{type: Schema.Types.ObjectId, ref: "BusLine.directions"}], required: false, default: []}
 });
 
