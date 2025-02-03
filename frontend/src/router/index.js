@@ -12,7 +12,8 @@ const router = createRouter({
     {path: '/login', component: LoginView},
     {path: '/registration', component: RegistrationView},
     {path: '/home', component: TemplateView, meta: {requiresAuth: true}},
-    {path: '/buslineedit', component:BusLineEditView, meta: {requiresAuth: true, restrictTo: ['admin']}}
+    {path: '/line/new', component:BusLineEditView, meta: {requiresAuth: true, restrictTo: ['admin']}},
+    {path: '/line/edit/:id', component:BusLineEditView, meta: {requiresAuth: true, restrictTo: ['admin']}}
   ],
 })
 

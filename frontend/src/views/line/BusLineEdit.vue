@@ -36,14 +36,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import EditLineStepOne from '@/views/line/components/EditLineStepOne.vue';
 import EditLineStepTwo from '@/views/line/components/EditLineStepTwo.vue';
 import EditLineStepThree from '@/views/line/components/EditLineStepThree.vue';
 import { BusLineService } from '@/service/BusLineService';
 import { useToast } from 'primevue';
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
+const route = useRoute();
 const router = useRouter();
 const currentStep = ref(1);
 const toast = useToast();
@@ -52,6 +53,19 @@ const busLine = ref({
     name: '',
     directions: []
 });
+
+const isEditMode = ref(false);
+
+onMounted(async () => {
+  if (route.params.id) {
+    isEditMode.value = true;
+    await loadLineData(route.params.id);
+  }
+});
+
+const loadLineData = async (id) => {
+    busLine.value = await BusLineService.getBusLineToEdit(id)
+}
 
 const saveBusLine = async () => {
     const data = {
@@ -71,8 +85,13 @@ const saveBusLine = async () => {
         })
     }
     try {
-        await BusLineService.createNewBusLine(data)
-        toast.add({severity: 'success', summary: 'Creazione linea completata. Verrai reindirizzato automaticamente', life: 3000 });
+        if(isEditMode.value){
+            await BusLineService.editBusLine(route.params.id, data)
+            toast.add({severity: 'success', summary: 'Modifica linea completata. Verrai reindirizzato automaticamente', life: 3000 });
+        }else{
+            await BusLineService.createNewBusLine(data)
+            toast.add({severity: 'success', summary: 'Creazione linea completata. Verrai reindirizzato automaticamente', life: 3000 });
+        }
         setTimeout(() => {
             router.push({ path: '/home' })
         }, 3000);

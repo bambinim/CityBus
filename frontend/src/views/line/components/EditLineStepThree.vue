@@ -75,7 +75,14 @@ const removeTimes = () => {
 
 const dataTableTransform = () => {
     let counter = 0
-    return busLine.value.directions[currentTab.value].timetable.map(el => {
+    return busLine.value.directions[currentTab.value].timetable.map((el, index) => {
+        if(el.length < busLine.value.directions[currentTab.value].stops.length){
+            let lastTime = el[0];
+            busLine.value.directions[currentTab.value].timetable[index] = [el[0]].concat(busLine.value.directions[currentTab.value].routeLegs.map(leg => {
+                lastTime = timeSum(lastTime, leg.duration);
+                return lastTime;
+            }))
+        }
         const row = {id: counter}
         for (let i = 0; i < el.length; i++) {
             row[i.toString()] = `${el[i].hour.toString().padStart(2, '0')}:${el[i].minute.toString().padStart(2, '0')}`

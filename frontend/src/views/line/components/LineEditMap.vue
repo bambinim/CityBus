@@ -83,6 +83,7 @@ async function handleMapClick(event){
 }
 
 const routeSteps = () => {
+    console.log(busLine.value.directions[props.directionIndex].routeLegs)
     return busLine.value.directions[props.directionIndex].routeLegs.flatMap(leg => {
         return leg.steps.map(step => step.geometry.coordinates.map(coord => [coord[1], coord[0]]))
     });
