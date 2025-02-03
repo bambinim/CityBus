@@ -3,7 +3,7 @@ const config = require("../config")
 const logging = require("../logging");
 const Logger = logging.Logger
 
-class RideData {
+class RideDataProvider {
     constructor() {
         this.client = createClient({url: config.REDIS_URL})
         this.client.on('error', err => {Logger.error(`Failed to connect to Redis: ${err}`)})
@@ -52,6 +52,6 @@ class RideDataEvent {
 }
 
 module.exports = {
-    RideData,
+    RideDataProvider,
     RideDataEvent
 }

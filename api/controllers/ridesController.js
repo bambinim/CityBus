@@ -1,6 +1,6 @@
 const express = require('express');
 const { BusLine, BusStop, BusRide } = require('../database');
-const { RideData } = require("../lib/RedisRide")
+const { RideDataProvider } = require("../lib/RedisRide")
 
 exports.createNewRide = async (req, res) => {
     try {
@@ -41,7 +41,7 @@ exports.createNewRide = async (req, res) => {
         })
         ride.stops[0].isBusPassed = true
         await ride.save()
-        const rideData = new RideData()
+        const rideData = new RideDataProvider()
         await rideData.connect()
         await rideData.setRide(ride._id.toString(), {
             position: (await BusStop.findById(ride.stops[0].stopId)).location.coordinates,
@@ -84,4 +84,32 @@ exports.getRidesList = async (req, res) => {
     } catch (err) {
         res.status(500).json({message: `Internal server error: ${err}`})
     }
+}
+
+exports.getRide = async (req, res) => {
+    //try {
+        const ride = await BusRide.findById(req.params.id)
+            .populate('lineId', ['name', 'directions._id', 'directions.name'])
+            .exec()
+        if (!ride) {
+            res.status(404).json({message: 'Bus ride not found'})
+            return
+        }
+        const rideDataProvider = new RideDataProvider()
+        await rideDataProvider.connect()
+        const rideStatus = await rideDataProvider.getRide(ride._id.toString())
+        res.json({
+            id: ride._id,
+            minutesLate: rideStatus.minutesLate,
+            line: ride.lineId.directions.filter(dir => dir._id.toString() == ride.directionId.toString()).map(dir => {
+                return {
+                    id: dir._id,
+                    name: dir.name
+                }
+            })[0],
+            stops: ride.stops
+        })
+    //} catch (err) {
+    //    res.status(500).json({message: `Internal server error: ${err}`})
+    //}
 }

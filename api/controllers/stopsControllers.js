@@ -2,7 +2,7 @@ const { query } = require('express')
 const {BusStop} = require('../database')
 const {BusLine} = require('../database')
 const {BusRide} = require('../database')
-const { RideData } = require("../lib/RedisRide")
+const { RideDataProvider } = require("../lib/RedisRide")
 
 
 
@@ -105,7 +105,7 @@ exports.getDepartures = async (req, res) => {
                 }
             });
 
-            const rideData = new RideData()
+            const rideData = new RideDataProvider()
             await rideData.connect()
 
 
