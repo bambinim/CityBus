@@ -80,12 +80,12 @@ exports.getDepartures = async (req, res) => {
     try{
 
         const stop = await BusStop.findById(busStopId)
-
+        const response = []
         if (!stop) {
             return res.status(404).json({ message: 'Bus stop not found' });
         }
 
-        const response = await Promise.all(stop.connectedLineDirections.map(async direction => {
+        await Promise.all(stop.connectedLineDirections.map(async direction => {
             const line = await BusLine.findOne({ 'directions._id': direction }, 'name directions.$');
 
             if (!line) {
@@ -94,7 +94,7 @@ exports.getDepartures = async (req, res) => {
 
             const dir = line.directions[0]
 
-            const ride = await BusRide.findOne({
+            const rides = await BusRide.find({
                 lineId: line._id, 
                 directionId: dir._id,
                 stops: {
@@ -108,26 +108,31 @@ exports.getDepartures = async (req, res) => {
             const rideData = new RideDataProvider()
             await rideData.connect()
 
+            return Promise.all(rides.map(async (ride) => {
+                const redisData = await rideData.getRide(ride._id.toString());
+                if (!redisData) {
+                    throw new Error('Ride data not available for ride ID ' + ride._id);
+                }
+    
+                const stopInfo = ride.stops.find(s => s.stopId.equals(stop._id));
+                if (!stopInfo) {
+                    return null;
+                }
 
-            const redisData = await rideData.getRide(ride._id.toString());
-            if (!redisData) {
-                throw new Error('Ride data not available.');
-            }
-
-            const stopInfo = ride.stops.find(stop => stop.stopId.toString() === busStopId);
-
-            return {
-                id: line._id,
-                name: line.name,
-                direction: {
-                    id: dir._id,
-                    name: dir.name,
+                response.push({
+                    id: line._id,
+                    name: line.name,
+                    direction: {
+                        id: direction._id,
+                        name: dir.name
+                    },
                     rideId: ride._id,
                     scheduledArrivalTimestamp: stopInfo.expectedArrivalTimestamp,
                     delay: redisData.minutesLate
-                }
-            };
-        }))
+                })
+                    
+            }));
+        }));
 
         res.status(200).json(response)
 

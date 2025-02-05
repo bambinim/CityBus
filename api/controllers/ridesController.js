@@ -95,6 +95,7 @@ exports.getRide = async (req, res) => {
             res.status(404).json({message: 'Bus ride not found'})
             return
         }
+
         const rideDataProvider = new RideDataProvider()
         await rideDataProvider.connect()
         const rideStatus = await rideDataProvider.getRide(ride._id.toString())
@@ -103,8 +104,12 @@ exports.getRide = async (req, res) => {
             minutesLate: rideStatus.minutesLate,
             line: ride.lineId.directions.filter(dir => dir._id.toString() == ride.directionId.toString()).map(dir => {
                 return {
-                    id: dir._id,
-                    name: dir.name
+                    id: ride.lineId._id,
+                    name: ride.lineId.name,
+                    direction: {
+                        id: dir._id,
+                        name: dir.name
+                    }
                 }
             })[0],
             stops: ride.stops
