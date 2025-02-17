@@ -34,16 +34,20 @@ const routeStepSchema = new Schema({
     geometry: {type: lineStringSchema, required: true, index: '2dsphere'}
 }, {_id: false});
 
+const routeSchema = new Schema({
+    path: {type: [routeStepSchema], required: true, default: undefined}
+})
+
 const directionSchema = new Schema({
     name: {type: String, required: true},
     stops: {type: [new Schema({
         stopId: {type: Schema.Types.ObjectId, required: true, ref: "BusStop"},
         name: {type: String, required: true},
-        routeToNext: {type: [routeStepSchema], required: true, default: undefined},
+        routeToNext: {type: Schema.Types.ObjectId, required: false, default: undefined, ref: "Route"},
         timeToNext: {type: Number, required: true}
     }, {_id: false})], required: true, default: undefined},
     timetable: {type: [[timeSchema]], required: true, default: undefined},
-    fullRoute: {type: [routeStepSchema], required: true, default: undefined}
+    fullRoute: {type: Schema.Types.ObjectId, required: true, ref: "Route"},
 });
 
 const busLineSchema = new Schema({
@@ -70,17 +74,34 @@ const busRideSchema = new Schema({
     }, {_id: false})], required: true, default: undefined}
 });
 
+const stopsConnectionSchema = new Schema({
+    from: {type: Schema.Types.ObjectId, required: true, ref: "BusStop"},
+    to: {type: Schema.Types.ObjectId, required: true, ref: "BusStop"},
+    lines: {
+        type: [new Schema({
+            lineId: {type: Schema.Types.ObjectId, required: true, ref: "BusLine"},
+            directionId: {type: Schema.Types.ObjectId, required: true, ref: "BusLine.directions"},
+            travelTime: {type: Number, required: true}
+        }, {_id: false})],
+        required: true, default: []}
+})
+
+
+const Route = mongoose.model("Route", routeSchema, "routes")
 const BusLine = mongoose.model("BusLine", busLineSchema, "bus_lines");
 const BusStop = mongoose.model("BusStop", busStopSchema, "bus_stops");
-const BusRide = mongoose.model("BusRun", busRideSchema, "bus_runs")
+const BusRide = mongoose.model("BusRun", busRideSchema, "bus_rides")
 const User = mongoose.model("User", userSchema, "users");
 const RenewToken = mongoose.model("RenewToken", renewTokenSchema, "renew_tokens");
+const StopsConnection = mongoose.model("StopsConnection", stopsConnectionSchema, "stops_connections")
 
 
 module.exports = {
+    Route: Route,
     BusLine: BusLine,
     BusStop: BusStop,
     BusRide: BusRide,
     User: User,
     RenewToken: RenewToken,
+    StopsConnection: StopsConnection
 }

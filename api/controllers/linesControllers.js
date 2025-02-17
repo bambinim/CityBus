@@ -1,67 +1,141 @@
 const express = require('express');
 const router = express.Router();
-const { BusLine, BusStop } = require('../database');
+const mongoose = require('mongoose')
+const { BusLine, BusStop, Route, StopsConnection } = require('../database');
+const { Logger } = require('../logging');
 
-exports.createNewLine = async (req, res) => {
-    try {
-        const { name, directions } = req.body;
-        if (!name || directions.length === 0) {
-            return res.status(400).json({ message: "Name and at least one direction are required." });
-        }
 
-        const processedDirections = await Promise.all(directions.map(async direction => {
-            const stops = await Promise.all(direction.stops.map(async (stop, index) => {
-                let stopDoc = undefined
-                if(typeof stop === "string"){
-                    stopDoc = await BusStop.findOne({ _id: stop });
-                }else{
-                    stopDoc = await BusStop.findOne({name: stop.name, location: stop.location})
-                }
-                
-                if(!stopDoc){
-                    stopDoc = await new BusStop({name: stop.name, location: stop.location}).save()
-                }
+const processDirections = ({ session, directions }) => {
+    return Promise.all(directions.map(async direction => {
+        const stops = await Promise.all(direction.stops.map(async (stop, index) => {
+            let stopDoc = undefined
+            if(typeof stop === "string"){
+                stopDoc = await BusStop.findOne({ _id: stop });
+            }else{
+                stopDoc = await BusStop.findOne({name: stop.name, location: stop.location})
+            }
+            
+            if(!stopDoc){
+                stopDoc = new BusStop({name: stop.name, location: stop.location}).save({ session })
+            }
+            await stopDoc.save({ session })
+            let routeToNext = undefined
+            if (index < direction.stops.length-1) {
+                routeToNext = new Route({
+                    path: direction.routeLegs[index].steps
+                })
+                routeToNext.save({ session })
+            }
 
-                return {
-                    stopId: stopDoc ? stopDoc._id : mongoose.Types.ObjectId(), 
-                    name: stopDoc.name,
-                    routeToNext: index === direction.stops.length-1 ? [] : direction.routeLegs[index].steps,
-                    timeToNext: index === direction.stops.length-1 ? 0 : direction.routeLegs[index].duration
-                };
-            }));
-    
+            return {
+                stopId: stopDoc ? stopDoc._id : mongoose.Types.ObjectId(), 
+                name: stopDoc.name,
+                routeToNext: routeToNext ? routeToNext._id : undefined,
+                timeToNext: index === direction.stops.length-1 ? 0 : direction.routeLegs[index].duration
+            };
+        }));
 
-            const fullRoute = direction.routeLegs.flatMap(leg => leg.steps.map(step => ({
+
+        const fullRoute = new Route({
+            path: direction.routeLegs.flatMap(leg => leg.steps.map(step => ({
                 duration: step.duration,
                 geometry: step.geometry
             })))
-    
-            return {
-                name: direction.name,
-                stops: stops,
-                timetable: direction.timetable,
-                fullRoute: fullRoute
-            };
-        }));
-    
-        const newBusLine = new BusLine({
-            name: name,
-            directions: processedDirections
-        });
+        })
+        fullRoute.save({ session })
 
-        await newBusLine.save();
-        for (const direction of newBusLine.directions) {
-            await BusStop.updateMany(
-                { _id: { $in: direction.stops.map(stop => stop.stopId) } },
-                { $push: { connectedLineDirections: direction._id } }
-            );
+        return {
+            name: direction.name,
+            stops: stops,
+            timetable: direction.timetable,
+            fullRoute: fullRoute._id
+        };
+    }));
+}
+
+const updateLinesCollateralCollections = async ({ session, busLine }) => {
+    for (const direction of busLine.directions) {
+        await BusStop.updateMany(
+            { _id: { $in: direction.stops.map(stop => stop.stopId) } },
+            { $push: { connectedLineDirections: direction._id } },
+            { session }
+        ).exec();
+            
+        for (let i = 0; i < direction.stops.length - 1; i++) {
+            let connection = await StopsConnection.findOne({
+                from: direction.stops[i].stopId,
+                to: direction.stops[i+1].stopId
+            })
+            if (!connection) {
+                connection = new StopsConnection({
+                    from: direction.stops[i].stopId,
+                    to: direction.stops[i+1].stopId,
+                    lines: []
+                })
+            }
+            connection.lines.push({
+                lineId: busLine._id,
+                directionId: direction._id,
+                travelTime: direction.stops[i].timeToNext
+            })
+            await connection.save({ session })
         }
+    }
+}
+
+const removeOldLineData = async ({ session, line }) => {
+    // remove routes
+    const routesToDelete = line.directions.flatMap(dir => [dir.fullRoute].concat(dir.stops.map(s => s.routeToNext)))
+    Logger.debug(`Routes to delete: ${routesToDelete}`)
+    await Route.deleteMany(
+        { "_id": { "$in": routesToDelete } },
+        { session }
+    ).exec()
+    // remove references from stops
+    const directionsIds = line.directions.map(d => d._id)
+    Logger.debug(`Directions ids: ${directionsIds}`)
+    await BusStop.updateMany(
+        { connectedLineDirections: { "$in": directionsIds } },
+        { "$pull": { connectedLineDirections: { "$in": directionsIds } } },
+        { session }
+    ).exec()
+    //remove references from stops connections
+    await StopsConnection.updateMany(
+        { "lines.lineId": line._id },
+        { "$pull": { "lines": { "lineId": line._id } } },
+        { session }
+    ).exec()
+}
+
+exports.createNewLine = async (req, res) => {
+    const session = await mongoose.startSession()
+    try {
+        await session.withTransaction(async () => {
+            const { name, directions } = req.body;
+            if (!name || directions.length === 0) {
+                return res.status(400).json({ message: "Name and at least one direction are required." });
+            }
+
+            const processedDirections = await processDirections({ session, directions })
+        
+            const newBusLine = new BusLine({
+                name: name,
+                directions: processedDirections
+            });
+
+            await newBusLine.save({ session });
+            await updateLinesCollateralCollections({ session, busLine: newBusLine })
+        })
+
+        
         res.status(201).json({
             message: "Bus line created successfully",
         });
     } catch (error) {
         console.error("Failed to create a new bus line:", error);
         res.status(500).json({ message: "Error creating a new bus line", error: error.message });
+    } finally {
+        session.endSession()
     }
 };
 
@@ -86,30 +160,27 @@ exports.getBusLines = async (req, res) => {
 
 exports.deleteBusLine = async (req, res) => {
     const busLineId = req.params.id
-
+    const session = await mongoose.startSession()
     try{
-        const busLine = await BusLine.findById(busLineId)
+        await session.withTransaction(async () => {
+            const busLine = await BusLine.findById(busLineId)
 
-        if(!busLine){
-            return res.status(404).json({ message: 'Bus line not found' });
-        }
+            if(!busLine){
+                return res.status(404).json({ message: 'Bus line not found' });
+            }
 
-        const directions = busLine.directions.map(direction => direction._id)
-        console.log(directions)
+            await removeOldLineData({ session, line: busLine })
+            await BusLine.deleteOne({_id: busLineId})
 
-        await BusLine.deleteOne({_id: busLineId})
-
-        await BusStop.updateMany(
-            { connectedLineDirections: { $in: directions } },
-            { $pull: { connectedLineDirections: { $in: directions } } }
-        )
-
-        
-        res.status(200).send({
-            message: "Resource deleted successfully",
-        });
+            res.status(200).send({
+                message: "Resource deleted successfully",
+            });
+        })
     }catch(error){
         res.status(500).send({message: 'Internal Server Error'})
+        Logger.error(error)
+    } finally {
+        await session.endSession()
     }
 }
 
@@ -117,7 +188,7 @@ exports.getCompleteBusLinesInfo = async (req, res) => {
     const busLineId = req.params.id
 
     try{
-        const busLine = await BusLine.findById(busLineId)
+        const busLine = await BusLine.findById(busLineId).populate('directions.stops.routeToNext')
 
         if(!busLine){
             return res.status(404).json({ message: 'Bus line not found' });
@@ -132,9 +203,9 @@ exports.getCompleteBusLinesInfo = async (req, res) => {
                 }
             }))
 
-            const routeLegs = direction.stops.map(stop => ({
-                duration: stop.routeToNext.reduce((total, route) => total + route.duration, 0),
-                steps: stop.routeToNext
+            const routeLegs = direction.stops.filter(stop => stop.routeToNext).map(stop => ({
+                duration: stop.routeToNext.path.reduce((total, route) => total + route.duration, 0),
+                steps: stop.routeToNext.path
             }))
                 
 
@@ -152,75 +223,39 @@ exports.getCompleteBusLinesInfo = async (req, res) => {
         }
         res.status(200).json(data)
     }catch(error){
+        Logger.error(`/lines/{lineId/complete error: ${error}`)
         res.status(500).send({message: 'Internal Server Error'})
     }
 }
 
 exports.editBusLine = async (req, res) => {
+    const busLineId = req.params.id
+    const { name, directions } = req.body;
+    if (!name || directions.length === 0) {
+        return res.status(400).json({ message: "Name and at least one direction are required." });
+    }
+    const session = await mongoose.startSession()
     try {
-        const busLineId = req.params.id
-        const { name, directions } = req.body;
-        if (!name || directions.length === 0) {
-            return res.status(400).json({ message: "Name and at least one direction are required." });
-        }
+        await session.withTransaction(async () => {
+            const originalLine = await BusLine.findById(busLineId)
 
-        const originalLine = await BusLine.findById(busLineId)
-        const directionId = originalLine.directions.map(direction => direction._id)
-        console.log(directionId)
+            await removeOldLineData({ session, line: originalLine })
 
-        const processedDirections = await Promise.all(directions.map(async direction => {
-            const stops = await Promise.all(direction.stops.map(async (stop, index) => {
-                let stopDoc = undefined
-                if(typeof stop === "string"){
-                    stopDoc = await BusStop.findOneAndUpdate({_id: stop}, { $pull: { connectedLineDirections: { $in: directionId } } }, {returnNewDocument: true});
-                }else{
-                    stopDoc = await BusStop.findOneAndUpdate({name: stop.name, location: stop.location}, { $pull: { connectedLineDirections: { $in: directionId } } }, {returnNewDocument: true})
-                }
-                
-                if(!stopDoc){
-                    stopDoc = await new BusStop({name: stop.name, location: stop.location}).save()
-                }
-                
-                return {
-                    stopId: stopDoc ? stopDoc._id : mongoose.Types.ObjectId(), 
-                    name: stopDoc.name,
-                    routeToNext: index === direction.stops.length-1 ? [] : direction.routeLegs[index].steps,
-                    timeToNext: index === direction.stops.length-1 ? 0 : direction.routeLegs[index].duration
-                };
-            }));
-    
+            const processedDirections = await processDirections({ session, directions })
+            
+            originalLine.directions = processedDirections
 
-            const fullRoute = direction.routeLegs.flatMap(leg => leg.steps.map(step => ({
-                duration: step.duration,
-                geometry: step.geometry
-            })))
-    
-            return {
-                name: direction.name,
-                stops: stops,
-                timetable: direction.timetable,
-                fullRoute: fullRoute
-            };
-        }));
-        
-        originalLine.directions = processedDirections
-
-        const updatedBusLine = await originalLine.save()
-        updatedBusLine.directions.forEach(d => {
-            console.log(d._id)
-        })
-        updatedBusLine.directions.forEach(async direction => {
-            await BusStop.updateMany(
-                { _id: { $in: direction.stops.map(stop => stop.stopId) } },
-                { $push: { connectedLineDirections: direction._id } }
-            );
+            const updatedBusLine = await originalLine.save({ session })
+            await updateLinesCollateralCollections({ session, busLine: updatedBusLine })
         })
 
         res.status(201).json({
             message: "Bus line modified successfully",
         });
     } catch (error) {
-        console.error("Failed to modify  bus line:", error);
+        Logger.error("Failed to modify  bus line:", error);
         res.status(500).json({ message: "Error modify bus line", error: error.message });
+    } finally {
+        session.endSession()
     }
 };

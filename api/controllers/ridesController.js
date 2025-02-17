@@ -65,7 +65,6 @@ exports.getRidesList = async (req, res) => {
             filters.directionId = req.query.direction
         }
         const rides = await BusRide.find(filters).populate('lineId', ['name', 'directions._id', 'directions.name']).exec()
-        console.log(rides[0].lineId.directions)
         res.json(rides.map(ride => {
             return {
                 id: ride._id,
