@@ -54,9 +54,8 @@ module.exports = {
         }
     },
     socketAllowedRoles: (authorizedRoles=["user", "driver", "admin"]) => {
-        Logger.debug("Authorization middleware called");
         return (socket, next) => {
-            const authHeaderContent = socket.headers.get("Authorization");
+            const authHeaderContent = socket.request.headers.authorization
             if (!authHeaderContent) {
                 next(new Error("User not authenticated"))
                 return;

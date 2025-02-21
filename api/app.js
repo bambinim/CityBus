@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const config = require("./config");
 const logging = require("./logging");
 const bodyParser = require('body-parser');
+const { socketAllowedRoles } = require("./middleware/security")
 
 const app = express()
 const server = http.createServer(app)
@@ -48,7 +49,7 @@ function routerSetup() {
 
 function socketsSetup() {
     const { ridePosition } = require("./controllers/socketsController")
-    io.of(/^\/rides\/[a-z 0-9]{24}\/position$/).on('connection', ridePosition)
+    io.of(/^\/rides\/[a-z 0-9]{24}\/position$/).use(socketAllowedRoles(['admin', 'driver'])).on('connection', ridePosition)
 }
 
 async function runDevelopmentServer() {
