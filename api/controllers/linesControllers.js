@@ -10,19 +10,20 @@ const processDirections = ({ session, directions }) => {
         const stops = await Promise.all(direction.stops.map(async (stop, index) => {
             let stopDoc = undefined
             if(typeof stop === "string"){
-                stopDoc = await BusStop.findOne({ _id: stop });
+                stopDoc = await BusStop.findOne({ _id: stop }).exec();
             }else{
-                stopDoc = await BusStop.findOne({name: stop.name, location: stop.location})
+                stopDoc = await BusStop.findOne({name: stop.name, location: stop.location}).exec()
             }
             
             if(!stopDoc){
-                stopDoc = new BusStop({name: stop.name, location: stop.location}).save({ session })
+                stopDoc = new BusStop({name: stop.name, location: stop.location})
             }
             await stopDoc.save({ session })
             let routeToNext = undefined
             if (index < direction.stops.length-1) {
                 routeToNext = new Route({
-                    path: direction.routeLegs[index].steps
+                    path: direction.routeLegs[index].steps,
+                    type: 'partial'
                 })
                 routeToNext.save({ session })
             }
@@ -40,7 +41,8 @@ const processDirections = ({ session, directions }) => {
             path: direction.routeLegs.flatMap(leg => leg.steps.map(step => ({
                 duration: step.duration,
                 geometry: step.geometry
-            })))
+            }))),
+            type: 'full'
         })
         fullRoute.save({ session })
 
@@ -58,6 +60,12 @@ const updateLinesCollateralCollections = async ({ session, busLine }) => {
         await BusStop.updateMany(
             { _id: { $in: direction.stops.map(stop => stop.stopId) } },
             { $push: { connectedLineDirections: direction._id } },
+            { session }
+        ).exec();
+
+        await Route.updateMany(
+            { _id: { $in: [direction.fullRoute].concat(direction.stops.map(s => s.routeToNext)) } },
+            { directionId: direction._id },
             { session }
         ).exec();
             

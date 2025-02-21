@@ -35,7 +35,9 @@ const routeStepSchema = new Schema({
 }, {_id: false});
 
 const routeSchema = new Schema({
-    path: {type: [routeStepSchema], required: true, default: undefined}
+    path: {type: [routeStepSchema], required: true, default: undefined},
+    type: {type: String, required: true, default: undefined, enum: ['full', 'partial']},
+    directionId: {type: Schema.Types.ObjectId, required: false, default: undefined}
 })
 
 const directionSchema = new Schema({

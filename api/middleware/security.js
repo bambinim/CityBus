@@ -15,7 +15,6 @@ function send403Response(res) {
 
 module.exports = {
     allowedRoles: (authorizedRoles=["user", "driver", "admin"]) => {
-        Logger.debug("Authorization middleware called");
         return (req, res, next) => {
             const authHeaderContent = req.get("Authorization");
             if (!authHeaderContent) {

@@ -1,43 +1,111 @@
-const { BusRide, BusLine } = require("../database");
-const { RideDataProvider, RideDataEvent } = require("../lib/RedisRide")
+const { BusRide, BusLine, Route } = require("../database");
 const io = require("socket.io")();
+const { RideDataProvider, RideDataEvent } = require("../lib/RedisRide")
+const { coordinatesDistance } = require("../lib/utils");
+const { Logger } = require("../logging");
 
 
-const findNextStop = async (ride, position) => {
-    const stops = await BusLine.find({
-        'directions._id': ride.directionId,
-        'directions.stops.routeToNext.geometry': {
-            $near: {
-                $geometry: {
-                    coordinates: position,
-                    type: 'Point'
-                }
-            }
+const checkRideId = async (rideId) => {
+    const ride = await BusRide.findById(rideId)
+    return ride ? true : false
+} 
+
+const getTimeToNextStop = ({ routeToNext, currentStepIndex, position }) => {
+    let closestIndex = -1
+    let closestDistance = -1
+    let currentDistance = undefined
+    for (let [i, coord] of routeToNext[currentStepIndex].geometry.coordinates) {
+        currentDistance = coordinatesDistance(position[1], position[0], coord[1], coord[0])
+        if (closestDistance < 0 || currentDistance < closestDistance) {
+            closestDistance = currentDistance
+            closestIndex = i
         }
-    }, ['directions.stops.stopId', 'directions.stops.name']).exec()
-    return stops
+    }
+    let timeToNext = routeToNext[currentStepIndex].duration * (1 - (closestIndex / routeToNext[currentStepIndex].geometry.coordinates.length))
+    for (let i = currentStepIndex + 1; i < routeToNext.length; i++) {
+        timeToNext += routeToNext[i].duration
+    }
+    Logger.debug(`Time to next: ${timeToNext}`)
+    return timeToNext
+}
+
+
+const calculateRealTimeRideData = async ({ rideId, position }) => {
+    const ride = await BusRide.findById(rideId).exec()
+    const currentRouteLeg = (await Route.aggregate([
+        {"$geoNear": {
+                near: {coordinates: position, type: 'Point'},
+                distanceField: "distance",
+                includeLocs: "location",
+                spherical: true,
+                key: "path.geometry",
+                query: { directionId: ride.directionId, type: 'partial' }
+        }},
+        {"$addFields": {
+            "currentStepIndex": { "$indexOfArray": ["$path.geometry", "$location"] }
+        }}
+    ]).exec())[0]
+    const direction = (await BusLine.findOne({ "directions._id": ride.directionId }).exec()).directions.filter(d => d._id.toString() == ride.directionId.toString())[0]
+    let currentStopIndex = undefined
+    for (const [idx, stop] of direction.stops.entries()) {
+        if (!stop.routeToNext) {
+            continue
+        }
+        if (stop.routeToNext.toString() != currentRouteLeg._id.toString()) {
+            continue
+        }
+        currentStopIndex = idx
+        break 
+    }
+    for (const stop of ride.stops) {
+        if (stop.stopId.toString() == direction.stops[currentStopIndex + 1].stopId.toString()) {
+            break
+        }
+        stop.isBusPassed = true
+    }
+    await ride.save()
+    const timeToNextStop = getTimeToNextStop({routeToNext: currentRouteLeg.path, currentStepIndex: currentRouteLeg.currentStepIndex, position})
+    const expectedArrivalTime = new Date()
+    expectedArrivalTime.setSeconds(expectedArrivalTime.getSeconds() + timeToNextStop)
+    // calculate bus lateness in milliseconds
+    let lateness = Math.floor(expectedArrivalTime - new Date(ride.stops[currentStopIndex + 1].expectedArrivalTimestamp))
+    if (lateness < 0) {
+        lateness = 0
+    }
+
+    return {
+        timeToNextStop: Math.floor(timeToNextStop), 
+        nextStop: direction.stops[currentStopIndex + 1].stopId.toString(),
+        minutesLate: Math.floor(lateness / 1000 / 60),
+        position: position
+    }
 }
 
 
 module.exports = {
     ridePosition: async (socket) => {
         const rideId = socket.nsp.name.split('/')[2]
-        const ride = await BusRide.findById(rideId).exec()
-        if (!ride) {
+        Logger.debug('Websocket opened')
+        if (!(await checkRideId(rideId))) {
+            Logger.error(`Position websocket error: ride with id ${rideId} does not exists`)
             socket.emit('error', 'Specified ride does not exists')
             socket.disconnect()
+            return
         }
         const rideDataProvider = new RideDataProvider()
         rideDataProvider.connect()
         const rideDataEvent = new RideDataEvent()
         rideDataEvent.connect()
+        Logger.debug('Ride position websocket estrablished')
 
         socket.on('put', async (position) => {
-            console.log(JSON.stringify(await findNextStop(ride, JSON.parse(position))))
+            const rideData = await calculateRealTimeRideData({rideId, position: JSON.parse(position)})
+            await rideDataProvider.setRide(rideId, rideData)
+            await rideDataEvent.publish(rideId, rideData)
         })
 
         socket.on('disconnect', () => {
             console.log('Socket closed')
         })
-    }
+    },
 }
