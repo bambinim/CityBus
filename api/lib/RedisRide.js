@@ -28,10 +28,14 @@ class RideDataProvider {
 }
 
 class RideDataEvent {
-    constructor(onMessageCallback) {
+    constructor() {
         this.client = createClient({url: config.REDIS_URL})
-        this.client.on('error', err => {Logger.error("Failed to connect to Redis")})
-        this.onMessageCallback = onMessageCallback
+        this.client.on('error', err => {Logger.error(`Redis error: ${err}`)})
+        this.listeners = []
+    }
+
+    onMessage(callback) {
+        this.listeners.push(callback)
     }
 
     async connect() {
@@ -39,11 +43,15 @@ class RideDataEvent {
     }
 
     async publish(rideId, rideData) {
-        await this.client.publish(`${rideId}:update`, JSON.stringify(rideData))
+        await this.client.publish(`${rideId}`, JSON.stringify(rideData))
     }
 
     async subscribe(rideIds) {
-        await this.client.subscribe(rideIds, this.onMessageCallback)
+        await this.client.subscribe(rideIds, async (message, channel) => {
+            const rideData = JSON.parse(message)
+            rideData.rideId = channel
+            this.listeners.forEach(l => l(rideData))
+        })
     }
 
     async unsubscribe(rideIds = undefined) {
