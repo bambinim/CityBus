@@ -43,6 +43,20 @@ export const BusStopService = {
         }
         throw msg
     },
+    async getStopInformation(stopId){
+        let msg = ''
+
+        try{
+            const res = await requests.get(`/stops/${stopId}`, {authenticated: true})
+            if (res.status == 200) {
+                return res.data;
+            }
+            msg = 'Informazioni non reperibili'
+        }catch{
+            msg = 'Errore nella richiesta'
+        }
+        throw msg
+    },
     async getDepartures(data){
         let msg = ''
         const{stopId, departureTimeStamp} = data

@@ -130,14 +130,22 @@ const stopSelected = async () => {
         toast.add({severity: 'warn', summary: 'Inserisci un orario di partenza', life: 3000 });
         return
     }
-    const departureTime = getTimeStampFromTime(dataPicker.value)
+
+    let departureTime = {
+        hour: dataPicker.value.split(':').map(Number)[0],
+        minute: dataPicker.value.split(':').map(Number)[1]
+    }
+
+    await BusRideService.startBusRideSimulation(selectedStop.value.stopId, departureTime)
+
+    departureTime = getTimeStampFromTime(dataPicker.value)
+
     departures.value = await BusStopService.getDepartures({ stopId: selectedStop.value.stopId, departureTimeStamp: departureTime})
     departures.value.sort((dep1, dep2) => dep1.scheduledArrivalTimestamp - dep2.scheduledArrivalTimestamp)
 }
 
 const selectDeparture = async (index) => {
     ride.value = await BusRideService.getBusRide(departures.value[index].rideId)
-    //await BusRideService.startBusRidSimulation(ride.value._id)
     isSingleRunView.value = true 
 }
 

@@ -1,22 +1,20 @@
-const { RideDataProvider, RideDataEvent } = require('./RedisRide');
-import { BusRideService } from '@/service/BusRideService';
 
-class BusSimulator {
-    constructor(busRideId) {
-        this.dataProvider = new RideDataProvider();
-        this.dataEvent = new RideDataEvent()
-        this.busRideId = busRideId;
-        this.nextStop = 0;
-        this.currentCoordinateIndex = 0;
-        this.currentRouteStep = 0
-        this.time = 0
+import { BusRideService } from '@/service/BusRideService';
+import { BusStopService } from '@/service/BusStopService';
+
+export class BusSimulator {
+    constructor() {
+        
     }
 
-    async init(){
-        this.ride = BusRideService.getBusRide(this.busRideId).populate({
-            path: 'directionId'
+    async init(stopId, departureTime){
+        const stopInfo = await BusStopService.getStopInformation(stopId)
+        console.log(stopInfo)
+        stopInfo.lines.map(line => {
+            line.directions.map(async dir => {
+                await BusRideService.createBusRide({directionId: dir.id, departureTime: departureTime})
+            })
         })
-        console.log(this.ride)
         await this.dataProvider.connect();
         await this.dataEvent.connect()
     }
@@ -44,5 +42,3 @@ class BusSimulator {
     }
 
 }
-
-module.exports = BusSimulator;

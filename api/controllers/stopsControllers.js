@@ -44,10 +44,8 @@ exports.getBusStopInformation = async (req,res) => {
     const busStopId = req.params.id
 
     try{
-        const busStop = await BusStop.findById(busStopId).populate({
-            path: 'connectedLineDirections',
-            populate: { path: 'directions' }
-        })
+        const busStop = await BusStop.findById(busStopId)
+        const busLines = await BusLine.find({ "directions.stops.stopId": busStopId }).lean();
         
 
         if (!busStop) {
@@ -57,14 +55,19 @@ exports.getBusStopInformation = async (req,res) => {
         response = {
             busStopId: busStopId,
             busStopName: busStop.name,
-            lines: busStop.connectedLineDirections.map(line => ({
-                lineId: line._id,
-                lineName: line.name,
-                direction: line.directions.map(direction => ({
-                    id: direction._id,
-                    name: direction.name
-                }))
-            }))
+            lines: busLines.map(line => {
+                connectedDirections = []
+                line.directions.forEach(direction => {
+                    if (direction.stops.some(stop => stop.stopId.toString() === busStopId.toString())) {
+                        connectedDirections.push({id: direction._id, name: direction.name});
+                    }
+                })
+                return {
+                    lineId: line._id,
+                    lineName: line.name,
+                    directions: connectedDirections
+                }
+            })
         }
         res.status(200).json(response)
     }catch (error) {

@@ -15,6 +15,7 @@ exports.createNewRide = async (req, res) => {
             return
         }
         const direction = line.directions.filter(dir => dir._id == body.directionId)[0]
+        console.log(body.departureTime.minute)
         let timetable = direction.timetable.filter(time => time[0].hour == body.departureTime.hour && time[0].minute == body.departureTime.minute)
         if (timetable.length < 1) {
             res.status(400).json({message: 'Departure time not valid'})
