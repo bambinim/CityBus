@@ -97,11 +97,24 @@ module.exports = {
         const rideDataEvent = new RideDataEvent()
         rideDataEvent.connect()
         Logger.debug('Ride position websocket estrablished')
+        await rideDataEvent.subscribe([`${rideId}:update`]);
+
+        rideDataEvent.onMessage((rideData) => {
+            if (rideData.rideId === `${rideId}:update`) {
+                Logger.debug(`Inoltro aggiornamento ricevuto da Redis a WebSocket`);
+                socket.emit('ride_update', rideData);
+            }
+        });
 
         socket.on('put', async (position) => {
+            if (!(await checkRideId(rideId))) {
+                console.log("Ride deleted")
+                socket.emit("deleted_ride")
+                socket.disconnect()
+                return
+            }
             const rideData = await calculateRealTimeRideData({rideId, position: JSON.parse(position)})
             await rideDataProvider.setRide(rideId, rideData)
-            await rideDataEvent.publish(rideId, rideData)
         })
 
         socket.on('disconnect', () => {

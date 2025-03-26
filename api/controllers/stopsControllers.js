@@ -110,7 +110,6 @@ exports.getDepartures = async (req, res) => {
 
             const rideData = new RideDataProvider()
             await rideData.connect()
-
             return Promise.all(rides.map(async (ride) => {
                 const redisData = await rideData.getRide(ride._id.toString());
                 if (!redisData) {
@@ -133,7 +132,6 @@ exports.getDepartures = async (req, res) => {
                     scheduledArrivalTimestamp: stopInfo.expectedArrivalTimestamp,
                     delay: redisData.minutesLate
                 })
-                    
             }));
         }));
 

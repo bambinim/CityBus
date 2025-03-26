@@ -55,18 +55,18 @@ module.exports = {
     },
     socketAllowedRoles: (authorizedRoles=["user", "driver", "admin"]) => {
         return (socket, next) => {
-            const authHeaderContent = socket.request.headers.authorization
+            const authHeaderContent = socket.request.headers.authorization || socket.handshake.auth.token
             if (!authHeaderContent) {
                 next(new Error("User not authenticated"))
                 return;
             }
             try {
                 const decoded = jwt.verify(authHeaderContent.replace("Bearer ", ""), config.APP_SECRET);
+                Logger.debug(decoded.role)
                 if (!authorizedRoles.includes(decoded.role)) {
                     next(new Error("User not authorized"))
                     return
                 }
-                console.log(decoded)
             } catch (error) {
                 next(new Error("User not authenticated"))
                 return;

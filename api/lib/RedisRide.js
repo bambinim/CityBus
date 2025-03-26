@@ -42,10 +42,6 @@ class RideDataEvent {
         await this.client.connect()
     }
 
-    async publish(rideId, rideData) {
-        await this.client.publish(`${rideId}`, JSON.stringify(rideData))
-    }
-
     async subscribe(rideIds) {
         await this.client.subscribe(rideIds, async (message, channel) => {
             const rideData = JSON.parse(message)

@@ -6,10 +6,14 @@ const config = require("./config");
 const logging = require("./logging");
 const bodyParser = require('body-parser');
 const { socketAllowedRoles } = require("./middleware/security")
+const { BusRideManager } = require("./lib/BusRideManager")
 
 const app = express()
 const server = http.createServer(app)
-const io = new Server(server)
+const busRideManager = new BusRideManager()
+const io = new Server(server, {
+    cors: { origin: "*", methods: ["GET", "POST"] }
+})
 const Logger  = logging.Logger;
 
 
@@ -58,6 +62,7 @@ async function runDevelopmentServer() {
     createCollections();
     routerSetup();
     socketsSetup();
+    busRideManager.init()
     const fs = require("fs");
     const YAML = require("yaml");
     const swaggerUi = require("swagger-ui-express");

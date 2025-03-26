@@ -2,7 +2,7 @@ const express = require('express');
 const { BusLine, BusStop, BusRide } = require('../database');
 const { RideDataProvider } = require("../lib/RedisRide")
 
-exports.createNewRide = async (req, res) => {
+/*exports.createNewRide = async (req, res) => {
     try {
         const body = req.body
         if (!(body.directionId && body.departureTime)) {
@@ -15,8 +15,8 @@ exports.createNewRide = async (req, res) => {
             return
         }
         const direction = line.directions.filter(dir => dir._id == body.directionId)[0]
-        console.log(body.departureTime.minute)
-        let timetable = direction.timetable.filter(time => time[0].hour == body.departureTime.hour && time[0].minute == body.departureTime.minute)
+        let timetable = direction.timetable.filter(time => (time[0].hour == body.departureTime.hour && time[0].minute > body.departureTime.minute)
+                                                            || (time[0].hour > body.departureTime.hour))
         if (timetable.length < 1) {
             res.status(400).json({message: 'Departure time not valid'})
             return
@@ -24,8 +24,9 @@ exports.createNewRide = async (req, res) => {
         timetable = timetable[0]
         const ride = BusRide()
         const scheduledDeparture = new Date()
-        scheduledDeparture.setHours(body.departureTime.hour, body.departureTime.minute, 0, 0)
+        scheduledDeparture.setHours(timetable[0].hour, timetable[0].minute, 0, 0)
         ride.scheduledDepartureTimestamp = scheduledDeparture.getTime()
+        const currentTimestamp = Date.now();
         ride.lineId = line._id
         ride.directionId = direction._id
         ride.status = 'running'
@@ -35,16 +36,15 @@ exports.createNewRide = async (req, res) => {
                 stopId: stop.stopId,
                 name: stop.name,
                 expectedArrivalTimestamp: currentStopTime.getTime(),
-                isBusPassed: false
+                isBusPassed: currentStopTime.getTime() < currentTimestamp ? true : false
             }
             currentStopTime.setSeconds(currentStopTime.getSeconds() + stop.timeToNext)
             return res
         })
-        ride.stops[0].isBusPassed = true
-        await ride.save()
+        ride.save()
         const rideData = new RideDataProvider()
-        await rideData.connect()
-        await rideData.setRide(ride._id.toString(), {
+        rideData.connect()
+        rideData.setRide(ride._id.toString(), {
             position: (await BusStop.findById(ride.stops[0].stopId)).location.coordinates,
             minutesLate: Math.floor((new Date() - scheduledDeparture) / 1000 / 60),
             timeToNextStop: direction.stops[0].timeToNext,
@@ -54,7 +54,7 @@ exports.createNewRide = async (req, res) => {
     } catch (err) {
         res.status(500).json({message: `Internal server error: ${err}`})
     }
-}
+}*/
 
 exports.getRidesList = async (req, res) => {
     try {

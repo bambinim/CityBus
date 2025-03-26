@@ -1,5 +1,5 @@
 import requests from "@/lib/requests";
-import { BusSimulator } from '@/utils/BusSimulator';
+
 
 export const BusRideService = {
 
@@ -7,6 +7,7 @@ export const BusRideService = {
         const {directionId, departureTime} = data
 
         let msg = '';
+        console.log(departureTime)
 
         try{
             const res = await requests.post(`/rides`,{ data: {
@@ -26,7 +27,7 @@ export const BusRideService = {
         let msg = '';
 
         try{
-            const res= await requests.get(`/rides/${rideId}`,{authenticated: true})
+            const res = await requests.get(`/rides/${rideId}`,{authenticated: true})
             if (res.status == 200) {
                 return res.data;
             }
@@ -35,11 +36,6 @@ export const BusRideService = {
             msg = 'Errore nel recupero della corsa'
         }
         throw msg
-    },
-    async startBusRideSimulation(stopId, departureTime){
-        const simulator = new BusSimulator()
-        simulator.init(stopId, departureTime)
-
     }
 
 }
