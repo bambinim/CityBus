@@ -1,8 +1,8 @@
 <template>
     <Toast />
     <AppMenu />
-    <div class="grow h-full w-full p-4">
-        <div v-if="!simulator.isReady">
+    <div class="grow h-full w-full p-4 grid grid-cols-4">
+        <div v-if="!simulator.isReady || (simulator.isReady && !isMobile)" class="md:col-span-2 col-span-4">
             <AutoComplete
                 v-model="selectedStop"
                 :suggestions="stopOptions"
@@ -47,8 +47,13 @@
                 </template>
             </Card>
         </div>
-        <div v-if="simulator.isReady" class="grid grid-cols-2 grid-rows-2 h-full flex flex-row">
-            <RideMap class="col-span-2 2xl:col-span-1"/>
+        <div v-if="simulator.isReady" class="md:col-span-2 col-span-4 grid grid-cols-2 grid-rows-2 h-full flex flex-row">
+            <div class="relative col-span-2 2xl:col-span-1">
+                <RideMap class="z-0"/>
+                <Button v-if="simulator.isReady && isMobile" rounded aria-label="Filter" class="absolute bottom-14 left-4 z-10" size="large" @click="handleBackButton">
+                    <font-awesome-icon :icon="faArrowLeft" />
+                </Button>
+            </div>
             <div class="col-span-2 2xl:col-span-1 flex flex-col text-lg mt-4">
                 <div class="w-full grid grid-cols-6 ">
                     <div class="rounded-lg text-white bg-blue-500 mr-2 col-span-1 col-start-3 text-center">
@@ -80,19 +85,19 @@
 import RideMap from './RideMap.vue';
 import { useToast } from 'primevue';
 import { BusStopService } from '@/service/BusStopService';
-import { faCircle, faBus } from '@fortawesome/free-solid-svg-icons'
+import { faCircle, faBus, faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { ref } from 'vue';
-import { BusRideService } from '@/service/BusRideService';
+import { useDevice } from '@/utils/useDevice';
 import { getTimeFromTimestamp, getTimeStampFromTime } from '@/utils/DateUtils';
 import { BusSimulator } from '@/utils/BusSimulator';
 import { useBusRideStore } from '@/stores/ride';
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
 
 const busRideStore = useBusRideStore();
 const selectedStop = ref(undefined)
 const stopOptions = ref([])
 const dataPicker = ref()
-
+const { isMobile } = useDevice();
 const departures = ref([])
 const ride = computed(() => busRideStore)
 
@@ -108,8 +113,6 @@ const loadOptions = async (event) => {
         toast.add({severity: 'error', summary: err, life: 3000 })
     }
 };
-
-
 
 const stopSelected = async () => {
     if(!dataPicker.value){
@@ -133,6 +136,10 @@ const selectDeparture = async (index) => {
         toast.add({severity: 'error', summary: errorMessage, life: 3000 });
         return
     })
+}
+
+const handleBackButton = () => {
+    simulator.value.reset()
 }
 
 </script>

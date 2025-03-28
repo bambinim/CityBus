@@ -37,7 +37,8 @@ export class BusSimulator {
     async followBusRide(rideId, onError){
         
         try {
-            
+            if(this.socket)
+                this.reset()
             this.rideId = rideId;
             this.ride = await BusRideService.getBusRide(this.rideId)  
             this.busRideStore.setRideInfo(this.ride)
