@@ -21,7 +21,7 @@
                 />
             </div>
 
-            <Card v-for="(departure, index) in departures" class="w-full sm:w-1/2 rounded-lg mt-4" :key="index" @click="selectDeparture(index)">
+            <Card v-for="(departure, index) in departures" class="w-full sm:w-3/4 rounded-lg mt-4" :key="index" @click="selectDeparture(index)">
                 <template #title>
                     <div  class="grid grid-cols-4">
                         <div class="rounded-lg text-white bg-blue-500 mr-2 col-span-1 text-center">
@@ -41,7 +41,7 @@
                             {{ departure.delay > 0 ? "Ritardo: ".concat(departure.delay.toString(), " minuti") : "In orario" }}
                         </p>
                         <p class="text-lg font-bold col-span-1 justify-end">
-                            in {{ Math.floor((departure.scheduledArrivalTimestamp - Date.now())/60000 + departure.delay) }} min
+                            in {{ Math.floor((departure.scheduledArrivalTimestamp - Date.now())/60000 + ( departure.delay > 0 ? departure.delay : 0)) }} min
                         </p>
                     </div>
                 </template>
