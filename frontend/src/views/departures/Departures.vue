@@ -35,13 +35,13 @@
                 <template #content>
                     <div class="grid grid-cols-4">
                         <p class="text-sm col-span-1">
-                            <font-awesome-icon :icon="faBus" /> {{ getTimeFromTimestamp(departure.scheduledArrivalTimestamp) }}
+                            <font-awesome-icon :icon="faBus" /> {{ getTimeFromTimestamp(departure.scheduledArrivalTimestamp, departure.delay)}}
                         </p>
                         <p class="text-sm col-span-2" :class="departure.delay > 0 ? 'text-orange-500' : 'text-green-500'">
                             {{ departure.delay > 0 ? "Ritardo: ".concat(departure.delay.toString(), " minuti") : "In orario" }}
                         </p>
                         <p class="text-lg font-bold col-span-1 justify-end">
-                            in {{ Math.floor((departure.scheduledArrivalTimestamp - Date.now())/60000) }} min
+                            in {{ Math.floor((departure.scheduledArrivalTimestamp - Date.now())/60000 + departure.delay) }} min
                         </p>
                     </div>
                 </template>
@@ -72,7 +72,9 @@
                             <span class="font-bold">{{ slotProps.item.name }}</span>
                         </template>
                         <template #opposite="slotProps">
-                            <span>{{ getTimeFromTimestamp(slotProps.item.expectedArrivalTimestamp) }}</span>
+                            <span>{{ ride.stopPassed.indexOf(slotProps.item.stopId) === -1 ? 
+                                                            getTimeFromTimestamp(slotProps.item.expectedArrivalTimestamp, ride.minutesLate) :
+                                                            getTimeFromTimestamp(slotProps.item.expectedArrivalTimestamp) }}</span>
                         </template>
                     </Timeline>
                 </div>

@@ -1,9 +1,18 @@
 
-function getTimeFromTimestamp(timeInput){
+function getTimeFromTimestamp(timeInput, delay=null){
     const date = new Date(timeInput)
-    const hour = date.getHours() < 10 ? '0'+date.getHours() : date.getHours()
-    const minute = date.getMinutes() < 10 ? '0'+date.getMinutes() : date.getMinutes()
-    return hour+":"+minute
+    let hour = date.getHours()
+    let minute = date.getMinutes()
+    if(delay != null && delay > 0){
+        hour += Math.trunc(delay / 60)
+        minute += delay - (60 * Math.trunc(delay / 60))
+        if(minute > 60){
+            hour += Math.floor(minute / 60)
+            minute = minute % 60
+        }
+    }
+    const time = (hour < 10 ? "0" + hour : hour) + ":" + (minute < 10 ? "0" + minute : minute)
+    return time
 }
 
 function getTimeStampFromTime(timeInput) {

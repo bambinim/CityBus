@@ -35,7 +35,6 @@ class BusRideManager{
                                 }
                             }else{
                                 await this.#createNewRide(direction._id, time[0])
-                                console.log("create new ride")
                             }
                         }else{
                             await BusRide.deleteOne({
@@ -61,6 +60,7 @@ class BusRideManager{
         }
         timetable = timetable[0]
         const ride = BusRide()
+        const now = Date.now()
         const scheduledDeparture = new Date()
         scheduledDeparture.setHours(departureTime.hour-1, departureTime.minute, 0, 0)
         ride.scheduledDepartureTimestamp = scheduledDeparture.getTime()
@@ -73,7 +73,7 @@ class BusRideManager{
                 stopId: stop.stopId,
                 name: stop.name,
                 expectedArrivalTimestamp: currentStopTime.getTime(),
-                isBusPassed: false
+                isBusPassed: currentStopTime.getTime() < now ? true : false
             }
             currentStopTime.setSeconds(currentStopTime.getSeconds() + stop.timeToNext)
             return res
