@@ -30,7 +30,20 @@ export const BusLineService = {
             }
             msg = 'Si è verificato un errore durante il recupero delle informazioni'
         }catch{
-            msg = 'Salvataggio linea fallito'
+            msg = 'Recupero linea fallito'
+        }
+        throw msg
+    },
+    async getBusLinesDetailedInformation(){
+        let msg = '';
+        try{
+            const res = await requests.get(`/lines/detailed`, {authenticated: true})
+            if (res.status == 200) {
+                return res.data;
+            }
+            msg = 'Si è verificato un errore durante il recupero delle linee'
+        }catch{
+            msg = 'Recupero linee fallito'
         }
         throw msg
     },

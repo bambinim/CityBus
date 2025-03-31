@@ -561,6 +561,50 @@ paths:
           $ref: "#/components/responses/403Forbidden"
         '500':
           $ref: "#/components/responses/500InternalServerError"
+  /lines/detailed:
+    get:
+      description: retrieve detailed informations about all lines
+      tags:
+        - busline
+      security:
+        - BearerAuth: []
+      parameters: []
+      responses:
+        '200':
+          description: "List of bus lines detailed informations"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    directions:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          name:
+                            type: string
+                          stops:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
   /lines/{busLineId}:
     put:
       summary: Update existing bus line

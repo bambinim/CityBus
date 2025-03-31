@@ -166,6 +166,31 @@ exports.getBusLines = async (req, res) => {
     }
 }
 
+exports.getBusLinesDetailed = async (req, res) => {
+    try{
+        const busLines = await BusLine.find().populate('directions')
+        console.log(busLines[0])
+        const response = []
+        busLines.map(line => {
+            line.directions.map(direction => {
+                response.push({
+                    line_id: line._id,
+                    line_name: line.name,
+                    direction_id: direction._id,
+                    direction_name: direction.name,
+                    stops: direction.stops.map(stop => ({
+                        stop_id: stop.stopId,
+                        stop_name: stop.name
+                    }))
+                })
+            })
+        })
+        res.status(200).json(response)
+    }catch(error){
+        res.status(500).send({message: 'Internal Server Error'})
+    }
+}
+
 exports.deleteBusLine = async (req, res) => {
     const busLineId = req.params.id
     const session = await mongoose.startSession()

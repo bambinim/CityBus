@@ -6,6 +6,7 @@ const linesController = require('../controllers/linesControllers')
 
 router.post('/', allowedRoles(['admin']), linesController.createNewLine)
 router.get('/', allowedRoles(['admin', 'user', 'driver']), linesController.getBusLines)
+router.get('/detailed', allowedRoles(['admin']), linesController.getBusLinesDetailed)
 router.delete('/:id', allowedRoles(['admin']), linesController.deleteBusLine)
 router.get('/:id/complete', allowedRoles(['admin', 'user', 'driver']), linesController.getCompleteBusLinesInfo)
 router.put('/:id', allowedRoles(['admin']), linesController.editBusLine)
