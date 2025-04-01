@@ -1,16 +1,17 @@
 function getTimeStampFromTime(timeInput) {
-    const hour = timeInput.hour - 1
-    const minute = timeInput.minute
-
     const now = new Date();
-
-
-    now.setUTCHours(hour);
-    now.setUTCMinutes(minute);
-    now.setUTCSeconds(0);
-    now.setUTCMilliseconds(0);
-
-    return now.getTime();
+    const hourLocal = now.toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome' }).split(':')[0];
+    const hourUTC = now.toTimeString().split(':')[0]
+    const offset = hourLocal - hourUTC
+    return Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        timeInput.hour - offset,
+        timeInput.minute,
+        0,
+        0
+    );
 }
 
 

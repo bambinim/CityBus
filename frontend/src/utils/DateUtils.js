@@ -6,7 +6,7 @@ function getTimeFromTimestamp(timeInput, delay=null){
     if(delay != null && delay > 0){
         hour += Math.trunc(delay / 60)
         minute += delay - (60 * Math.trunc(delay / 60))
-        if(minute > 60){
+        if(minute > 59){
             hour += Math.floor(minute / 60)
             minute = minute % 60
         }

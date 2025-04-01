@@ -64,7 +64,21 @@ export const BusLineService = {
             msg = 'Salvataggio linea fallito'
         }
         throw msg
-    }
+    },
+    async deleteBusLine(id){
+        let msg = '';
+
+        try{
+            const res = await requests.delete(`/lines/${id}`,{ authenticated: true })
+            if (res.status == 200) {
+                return;
+            }
+            msg = 'Si è verificato un errore durante la rimozione della linea'
+        }catch{
+            msg = 'Eliminazione linea fallito'
+        }
+        throw msg
+    },
 
 
 }
