@@ -6,7 +6,7 @@ const config = require("./config");
 const logging = require("./logging");
 const bodyParser = require('body-parser');
 const { socketAllowedRoles } = require("./middleware/security")
-const { BusRideManager } = require("./lib/BusRideManager")
+const { BusRideManager } = require("./manager/BusRideManager")
 
 const app = express()
 const server = http.createServer(app)
