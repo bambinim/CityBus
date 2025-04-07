@@ -113,6 +113,7 @@ module.exports = {
                 socket.disconnect()
                 return
             }
+            console.log("put")
             const rideData = await calculateRealTimeRideData({rideId, position: JSON.parse(position)})
             await rideDataProvider.setRide(rideId, rideData)
         })

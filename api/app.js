@@ -62,7 +62,7 @@ async function runDevelopmentServer() {
     createCollections();
     routerSetup();
     socketsSetup();
-    busRideManager.init()
+    busRideManager.init(io)
     const fs = require("fs");
     const YAML = require("yaml");
     const swaggerUi = require("swagger-ui-express");

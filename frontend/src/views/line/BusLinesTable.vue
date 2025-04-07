@@ -1,7 +1,7 @@
 <template>
     <AppMenu />
     <div class="flex flex-col items-center justify-center w-full h-full">
-        <DataTable v-model:selection="selectedLines" sortField="line_name" :sortOrder="-1" showGridlines paginator :rows="10" scrollable scrollHeight="h-2/3" :value="lines" rowGroupMode="rowspan" groupRowsBy="line_name" dataKey="line_id" sortMode="single" :metaKeySelection="false" tableStyle="min-width: 50rem" class="sm:w-3/4 sm:h-1/2 md:w-2/3 md:h-1/2 justify-center">
+        <DataTable v-model:selection="selectedLines" sortField="line_name" :sortOrder="-1" showGridlines paginator :rows="10" scrollable scrollHeight="h-2/3" :value="lines" rowGroupMode="rowspan" groupRowsBy="line_name" dataKey="line_id" sortMode="single" :metaKeySelection="false" tableStyle="min-width: 50rem" class="w-full h-full p-4">
             <template #header>
                 <div class="flex flex-wrap gap-2 items-center justify-between">
                     <h4 class="m-0">Gestione linee</h4>

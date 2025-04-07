@@ -3,24 +3,22 @@
     <AppMenu />
     <div class="grow h-full w-full p-4 grid grid-cols-4">
         <div v-if="!simulator.isReady || (simulator.isReady && !isMobile)" class="md:col-span-2 col-span-4">
-            <AutoComplete
-                v-model="selectedStop"
-                :suggestions="stopOptions"
-                @complete="loadOptions"
-                @option-select="stopSelected()"
-                optionLabel="name"
-                placeholder="Da dove vuoi partire" />
+            <div class="flex flex-wrap justify-start items-end gap-4">
+                <AutoComplete
+                    v-model="selectedStop"
+                    :suggestions="stopOptions"
+                    @complete="loadOptions"
+                    optionLabel="name"
+                    placeholder="Da dove vuoi partire" />
 
-            <div class="mt-4 grid grid-cols-3 sm:w-1/2">
-                <h2 for="departure-time" class="col-span-1 text-lg">Quando: </h2>
+
                 <InputText
                     id="departure-time"
                     type="time"
                     v-model="dataPicker"
-                    class="col-span-2 rounded-lg"
-                />
+                    />
+                <Button label="Search" icon="pi pi-search" @click="viewDepartures()" />
             </div>
-
             <Card v-for="(departure, index) in departures" class="w-full sm:w-3/4 rounded-lg mt-4" :key="index" @click="selectDeparture(index)">
                 <template #title>
                     <div  class="grid grid-cols-4">
@@ -91,7 +89,7 @@ import { faCircle, faBus, faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { ref } from 'vue';
 import { useDevice } from '@/utils/useDevice';
 import { getTimeFromTimestamp, getTimeStampFromTime } from '@/utils/DateUtils';
-import { BusSimulator } from '@/utils/BusSimulator';
+import { BusSimulator } from '@/simulator/BusSimulator';
 import { useBusRideStore } from '@/stores/ride';
 import { computed } from 'vue';
 
@@ -116,7 +114,7 @@ const loadOptions = async (event) => {
     }
 };
 
-const stopSelected = async () => {
+const viewDepartures = async () => {
     if(!dataPicker.value){
         toast.add({severity: 'warn', summary: 'Inserisci un orario di partenza', life: 3000 });
         return
@@ -124,11 +122,11 @@ const stopSelected = async () => {
 
     const departureTimestamp = getTimeStampFromTime(dataPicker.value)
 
-    departures.value = await simulator.value.init({stopId: selectedStop.value.stopId, departureTimestamp: departureTimestamp})
+    departures.value = await BusStopService.getDepartures({stopId: selectedStop.value.stopId, departureTimestamp: departureTimestamp})
     departures.value.sort((dep1, dep2) => dep1.scheduledArrivalTimestamp - dep2.scheduledArrivalTimestamp)
 
     setInterval(async () => {
-        departures.value = await simulator.value.init({stopId: selectedStop.value.stopId, departureTimestamp: departureTimestamp})
+        departures.value = await BusStopService.getDepartures({stopId: selectedStop.value.stopId, departureTimestamp: departureTimestamp})
         departures.value.sort((dep1, dep2) => dep1.scheduledArrivalTimestamp - dep2.scheduledArrivalTimestamp)
     }, 10000)
 }

@@ -1,5 +1,6 @@
 const axios = require('axios');
-const {Route, BusLine} = require('../database')
+const {Route, BusLine} = require('../database');
+const { BusRouteService } = require('../services/BusRouteServices');
 
 
 exports.generateRoutes = async (req, res) => {
@@ -34,14 +35,8 @@ exports.getRoute = async (req, res) => {
     try {
         const stopId = req.params.stopId
         const directionId = req.params.directionId
-        const line = await BusLine.findOne({'directions._id': directionId}).exec();
-        if (!line) {
-            res.status(400).json({message: 'Invalid direction id'})
-            return
-        }
-        const direction = line.directions.filter(dir => dir._id == directionId)[0]
-        const stopInfo = direction.stops.filter(stop => stop.stopId == stopId)[0]
-        const route = await Route.findById(stopInfo.routeToNext).exec();
+        
+        const route = BusRouteService.getRoute(stopId, directionId)
 
         if (!route) {
             return res.status(404).json({ error: "Route not found" });
