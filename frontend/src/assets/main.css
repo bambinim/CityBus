@@ -4,3 +4,7 @@ html {
 body {
     height: 100%;
 }
+
+.p-menubar-submenu {
+    z-index: 999 !important;
+}
