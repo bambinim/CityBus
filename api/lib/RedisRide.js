@@ -13,6 +13,10 @@ class RideDataProvider {
         await this.client.connect()
     }
 
+    async disconnect() {
+        await this.client.disconnect()
+    }
+
     async removeRide(rideId) {
         await this.client.del([rideId])
     }
@@ -40,6 +44,10 @@ class RideDataEvent {
 
     async connect() {
         await this.client.connect()
+    }
+
+    async disconnect() {
+        await this.client.disconnect()
     }
 
     async subscribe(rideIds) {

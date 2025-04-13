@@ -25,7 +25,6 @@ const getTimeToNextStop = ({ routeToNext, currentStepIndex, position }) => {
     for (let i = currentStepIndex + 1; i < routeToNext.length; i++) {
         timeToNext += routeToNext[i].duration
     }
-    Logger.debug(`Time to next: ${timeToNext}`)
     return timeToNext
 }
 
@@ -84,8 +83,8 @@ const calculateRealTimeRideData = async ({ rideId, position }) => {
 
 module.exports = {
     ridePosition: async (socket) => {
+        Logger.debug('Connected to ridePosition websocket')
         const rideId = socket.nsp.name.split('/')[2]
-        Logger.debug('Websocket opened')
         if (!(await checkRideId(rideId))) {
             Logger.error(`Position websocket error: ride with id ${rideId} does not exists`)
             socket.emit('error', 'Specified ride does not exists')
@@ -96,30 +95,56 @@ module.exports = {
         rideDataProvider.connect()
         const rideDataEvent = new RideDataEvent()
         rideDataEvent.connect()
-        Logger.debug('Ride position websocket estrablished')
+        // Logger.debug('Ride position websocket estrablished')
         await rideDataEvent.subscribe([`${rideId}:update`]);
 
         rideDataEvent.onMessage((rideData) => {
             if (rideData.rideId === `${rideId}:update`) {
-                Logger.debug(`Inoltro aggiornamento ricevuto da Redis a WebSocket`);
+                // Logger.debug(`Inoltro aggiornamento ricevuto da Redis a WebSocket`);
                 socket.emit('ride_update', rideData);
             }
         });
 
         socket.on('put', async (position) => {
             if (!(await checkRideId(rideId))) {
-                console.log("Ride deleted")
+                Logger.debug("Ride deleted")
                 socket.emit("deleted_ride")
                 socket.disconnect()
                 return
             }
-            console.log("put")
+            // Logger.debug("put")
             const rideData = await calculateRealTimeRideData({rideId, position: JSON.parse(position)})
             await rideDataProvider.setRide(rideId, rideData)
         })
 
         socket.on('disconnect', () => {
-            console.log('Socket closed')
+            Logger.debug('Socket closed')
         })
     },
+
+    allRidesPositions: async (socket) => {
+        Logger.debug('Connecte to allRidesPositions websocket')
+        const rideDataProvider = new RideDataProvider()
+        rideDataProvider.connect()
+        const rideDataEvent = new RideDataEvent((rideData) => {
+            socket.emit('update', rideData)
+        })
+
+        rideDataEvent.connect()
+
+        socket.on('disconnect', () => {
+            rideDataProvider.disconnect()
+            rideDataEvent.disconnect()
+        })
+
+        // get data stored inside redis for specified rides
+        socket.on('get-rides', (ridesIds, callback) => {
+            Logger.debug('Received all position request')
+            callback(ridesIds.map(ride => rideDataProvider.getRide(ride)).filter(ride => ride))
+        })
+        // subscribe to rides updates
+        socket.on('subscribe', async (rides) => {
+            await rideDataEvent.subscribe(rides)
+        })
+    }
 }

@@ -2,7 +2,7 @@ const express = require('express');
 const { BusLine, BusStop, BusRide } = require('../database');
 const { RideDataProvider } = require("../lib/RedisRide")
 
-/*exports.createNewRide = async (req, res) => {
+exports.createNewRide = async (req, res) => {
     try {
         const body = req.body
         if (!(body.directionId && body.departureTime)) {
@@ -54,7 +54,7 @@ const { RideDataProvider } = require("../lib/RedisRide")
     } catch (err) {
         res.status(500).json({message: `Internal server error: ${err}`})
     }
-}*/
+}
 
 exports.getRidesList = async (req, res) => {
     try {
