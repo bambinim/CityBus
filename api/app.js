@@ -52,7 +52,8 @@ function routerSetup() {
 }
 
 function socketsSetup() {
-    const { ridePosition } = require("./controllers/socketsController")
+    const { ridePosition, allRidesPositions } = require("./controllers/socketsController")
+    io.of('/rides').use(socketAllowedRoles(['admin'])).on('connection', allRidesPositions)
     io.of(/^\/rides\/[a-z 0-9]{24}\/position$/).use(socketAllowedRoles(['admin', 'driver'])).on('connection', ridePosition)
 }
 

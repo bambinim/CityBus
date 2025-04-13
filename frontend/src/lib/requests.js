@@ -57,5 +57,6 @@ export default {
     get: getRequest,
     post: postRequest,
     put: putRequest,
-    delete: deleteRequest
+    delete: deleteRequest,
+    authorizationHeader: getAuthorizationHeader
 }

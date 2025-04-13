@@ -3,7 +3,7 @@ import requests from "@/lib/requests";
 
 export const BusRideService = {
 
-    async createBusRide(data){
+    async createBusRide(data) {
         const {directionId, departureTime} = data
 
         let msg = '';
@@ -22,8 +22,9 @@ export const BusRideService = {
             msg = 'Errore nel recupero della corsa'
         }
         throw msg
-    }
-    ,async getBusRide(rideId){
+    },
+    
+    async getBusRide(rideId) {
         let msg = '';
 
         try{
@@ -36,6 +37,19 @@ export const BusRideService = {
             msg = 'Errore nel recupero della corsa'
         }
         throw msg
-    }
+    },
 
+    async getBusRidesList() {
+        let msg = ''
+        try {
+            const res = await requests.get(`/rides`, {authenticated: true})
+            if (res.status == 200) {
+                return res.data
+            }
+            msg = 'Si è verificato un errore durante il recupero delle linee'
+        } catch {
+            msg = 'Errore durante il recupero delle linee'
+        }
+        throw msg
+    }
 }
