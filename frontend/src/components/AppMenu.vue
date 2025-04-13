@@ -19,7 +19,7 @@ const menuBarItems = computed(() => {
     if (userStore.role == 'admin') {
         items.push({label: 'Amministrazione', icon: faGear, items: [
             {label: 'Mappa', icon: faMap, command: () => router.push('/rides-map')},
-            {label: 'Linee', icon: faRoad},
+            {label: 'Linee', icon: faRoad, command: () => router.push('/lines/view')},
             {label: 'Utenti', icon: faUsers}
         ]})
     }

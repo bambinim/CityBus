@@ -1,7 +1,7 @@
 <template>
-    <div class="grid grid-cols-2 grid-rows-2">
-        <LineEditMap v-model="busLine" :direction-index="currentTab" class="col-span-2 2xl:col-span-1"/>
-        <Tabs class="col-span-2 2xl:col-span-1 flex flex-col" v-model:value="currentTab">
+    <div class="grid grid-cols-2 h-full grow">
+        <LineEditMap v-model="busLine" :direction-index="currentTab" class="col-span-2 xl:col-span-1 h-full mx-1 my-1"/>
+        <Tabs class="col-span-2 xl:col-span-1 flex flex-col h-full mx-1 my-1" v-model:value="currentTab">
             <TabList>
                 <Tab v-for="(direction, indexDir) in busLine.directions" :value="indexDir">{{ direction.name }}</Tab>
             </TabList>
