@@ -27,7 +27,7 @@ import { useBusRideStore } from '@/stores/ride';
 
 const busRideStore = useBusRideStore();
 const position = computed(() => busRideStore.position);
-const name = busRideStore.rideInfo.line.name
+const name = computed(() => busRideStore.rideInfo.line.name)
 const zoom = ref(13)
 const center = ref([position[1] || 44.136352, position[0] || 12.242244]);
 

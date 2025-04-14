@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { BusRideService } from '@/service/BusRideService';
 
 export const useBusRideStore = defineStore('ride', {
     state: () => ({
@@ -20,8 +21,9 @@ export const useBusRideStore = defineStore('ride', {
                 this.stopPassed.indexOf(stop.stopId) === -1 ? this.stopPassed.push(stop.stopId) : null
             })
         },
-        setRideInfo(rideInfo){
-            this.rideInfo = rideInfo
+        async setRideInfo(rideId){
+            this.rideInfo = await BusRideService.getBusRide(rideId)
+            this.stopPassed = []
         }
     }
 });

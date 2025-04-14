@@ -2,7 +2,7 @@
     <Toast />
     <AppMenu />
     <div class="grow h-full w-full p-4 grid grid-cols-4">
-        <div v-if="!simulator.isReady || (simulator.isReady && !isMobile)" class="md:col-span-2 col-span-4">
+        <div v-if="!simulatorView || (simulatorView && !isMobile)" class="md:col-span-2 col-span-4">
             <div class="flex flex-wrap justify-start items-end gap-4">
                 <AutoComplete
                     v-model="selectedStop"
@@ -45,21 +45,32 @@
                 </template>
             </Card>
         </div>
-        <div v-if="simulator.isReady" class="md:col-span-2 col-span-4 grid grid-cols-2 grid-rows-2 h-full flex flex-row">
+        <div v-if="simulatorView" class="md:col-span-2 col-span-4 grid grid-cols-2 grid-rows-2 h-full flex flex-row">
             <div class="relative col-span-2">
                 <RideMap class="z-0"/>
-                <Button v-if="simulator.isReady && isMobile" rounded aria-label="Filter" class="absolute bottom-14 left-4 z-10" size="large" @click="handleBackButton">
+                <Button v-if="simulatorView && isMobile" rounded aria-label="Filter" class="absolute bottom-14 left-4 z-10" size="large" @click="handleBackButton">
                     <font-awesome-icon :icon="faArrowLeft" />
                 </Button>
             </div>
             <div class="col-span-2 flex flex-col text-lg mt-4">
-                <div class="w-full grid grid-cols-6 ">
-                    <div class="rounded-lg text-white bg-blue-500 mr-2 col-span-1 col-start-3 text-center">
+                <div class="w-full grid grid-cols-4 ">
+                    <div class="rounded-lg text-white bg-blue-500 mr-2 col-span-1 text-center">
                         {{ ride.rideInfo.line.name }}
                     </div>
-                    <p class="col-span-3 justify-start">
+                    <p class="col-span-1">
                         {{ ride.rideInfo.line.direction.name }}
                     </p>
+                    <span class="col-span-2" :class="ride.minutesLate > 0 ? 'text-orange-500' : 'text-green-500'">{{ ride.minutesLate > 0 ? 'Ritardo: ' + ride.minutesLate + ' minuti' : 'In orario' }}</span>
+                </div>
+                <div class="p-4 flex gap-x-8">
+                    <span class="flex-none">{{ ride.rideInfo.stops.filter(stop => stop.stopId == ride.stopPassed[ride.stopPassed.length - 1])[0]?.name }}</span>
+                    <ProgressBar 
+                        :showValue="false"
+                        :value="100 * (1 - (ride.timeToNextStop / getTimeDifference(
+                                                            ride.rideInfo.stops.filter(stop => stop.stopId == ride.nextStop)[0]?.expectedArrivalTimestamp,
+                                                            ride.rideInfo.stops.filter(stop => stop.stopId == ride.stopPassed[ride.stopPassed.length - 1])[0]?.expectedArrivalTimestamp)))" 
+                        class="grow mt-1"></ProgressBar>
+                    <span class="flex-none">{{ ride.rideInfo.stops.filter(stop => stop.stopId == ride.nextStop)[0]?.name }}</span>
                 </div>
                 <div class="mt-4 left-0">
                     <Timeline :value="ride.rideInfo.stops" align="alternate">
@@ -88,7 +99,7 @@ import { BusStopService } from '@/service/BusStopService';
 import { faCircle, faBus, faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { ref } from 'vue';
 import { useDevice } from '@/utils/useDevice';
-import { getTimeFromTimestamp, getTimeStampFromTime } from '@/utils/DateUtils';
+import { getTimeFromTimestamp, getTimeStampFromTime, getTimeDifference } from '@/utils/DateUtils';
 import { BusSimulator } from '@/simulator/BusSimulator';
 import { useBusRideStore } from '@/stores/ride';
 import { computed } from 'vue';
@@ -100,7 +111,8 @@ const dataPicker = ref()
 const { isMobile } = useDevice();
 const departures = ref([])
 const ride = computed(() => busRideStore)
-
+const lastStopSelected = ref()
+const simulatorView = ref(false)
 const simulator = ref(new BusSimulator())
 
 
@@ -125,21 +137,26 @@ const viewDepartures = async () => {
     departures.value = await BusStopService.getDepartures({stopId: selectedStop.value.stopId, departureTimestamp: departureTimestamp})
     departures.value.sort((dep1, dep2) => dep1.scheduledArrivalTimestamp - dep2.scheduledArrivalTimestamp)
 
+    lastStopSelected.value = selectedStop.value
+
     setInterval(async () => {
-        departures.value = await BusStopService.getDepartures({stopId: selectedStop.value.stopId, departureTimestamp: departureTimestamp})
+        departures.value = await BusStopService.getDepartures({stopId: lastStopSelected.value.stopId, departureTimestamp: departureTimestamp})
         departures.value.sort((dep1, dep2) => dep1.scheduledArrivalTimestamp - dep2.scheduledArrivalTimestamp)
     }, 10000)
 }
 
 const selectDeparture = async (index) => {
+    simulator.value.reset()
     await simulator.value.followBusRide(departures.value[index].rideId, (errorMessage) => {
         toast.add({severity: 'error', summary: errorMessage, life: 3000 });
         return
     })
+    simulatorView.value = true
 }
 
 const handleBackButton = () => {
     simulator.value.reset()
+    simulatorView.value = false
 }
 
 </script>

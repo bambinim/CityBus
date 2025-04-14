@@ -28,4 +28,11 @@ function getTimeStampFromTime(timeInput) {
     return now.getTime();
 }
 
-export {getTimeFromTimestamp, getTimeStampFromTime}
+function getTimeDifference(time1, time2) {
+    const timeDifference = time1 - time2
+
+    const secondsDifference = Math.floor(timeDifference / 1000)
+    return secondsDifference
+}
+
+export {getTimeFromTimestamp, getTimeStampFromTime, getTimeDifference}
