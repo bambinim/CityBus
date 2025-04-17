@@ -126,11 +126,11 @@ module.exports = {
         Logger.debug('Connecte to allRidesPositions websocket')
         const rideDataProvider = new RideDataProvider()
         rideDataProvider.connect()
-        const rideDataEvent = new RideDataEvent((rideData) => {
+        const rideDataEvent = new RideDataEvent()
+        rideDataEvent.connect()
+        rideDataEvent.onMessage((rideData) => {
             socket.emit('update', rideData)
         })
-
-        rideDataEvent.connect()
 
         socket.on('disconnect', () => {
             rideDataProvider.disconnect()
@@ -138,9 +138,13 @@ module.exports = {
         })
 
         // get data stored inside redis for specified rides
-        socket.on('get-rides', (ridesIds, callback) => {
+        socket.on('get-rides', async (ridesIds, callback) => {
             Logger.debug('Received all position request')
-            callback(ridesIds.map(ride => rideDataProvider.getRide(ride)).filter(ride => ride))
+            callback((await Promise.all(ridesIds.map(async ride => {
+                const data = await rideDataProvider.getRide(ride);
+                data.rideId = ride;
+                return data;
+            }))).filter(ride => ride))
         })
         // subscribe to rides updates
         socket.on('subscribe', async (rides) => {

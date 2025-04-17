@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { LMap, LTileLayer, LControlZoom } from "@vue-leaflet/vue-leaflet";
+import { LMap, LTileLayer, LControlZoom, LMarker, LIcon } from "@vue-leaflet/vue-leaflet";
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { BusRideService } from '@/service/BusRideService';
-import ws from '@/lib/socketRequests'
+import { WebSocket } from '@/lib/websocket'
 
 const selectButtonValue = ref({ name: 'Tutte', value: 0 })
 const selectButtonOptions = ref([
@@ -14,6 +14,8 @@ const selectButtonOptions = ref([
 const mapCenter = ref([44.136352, 12.242244])
 const mapZoom = ref(13)
 const rides = ref([])
+const realTimeData = ref({})
+const socket = new WebSocket('/rides')
 
 const convertRidesToLines = () => {
     const lines = {}
@@ -35,6 +37,10 @@ const convertRidesToLines = () => {
     return lines
 }
 
+const updateRealTimeData = (ridesData) => {
+    realTimeData.value = Object.fromEntries(ridesData.map(ride => [ride.rideId, ride]))
+}
+
 const linesNodes = computed(() => Object.entries(convertRidesToLines()).map(([lineId, line]) => {
     return {
         key: lineId,
@@ -49,6 +55,16 @@ const linesNodes = computed(() => Object.entries(convertRidesToLines()).map(([li
     }
 }))
 
+const ridesPositions = computed(() => rides.value.map(ride => {
+    if (realTimeData.value[ride.id]) {
+        return {
+            id: ride.id,
+            line: ride.line.name,
+            position: realTimeData.value[ride.id].position
+        }
+    }
+}))
+
 const retrieveRidesList = async () => {
     try {
         rides.value = await BusRideService.getBusRidesList()
@@ -59,9 +75,8 @@ const retrieveRidesList = async () => {
 
 onMounted(async () => {
     await retrieveRidesList()
-    const socket = await ws.create('/rides')
     socket.emit('get-rides', rides.value.map(ride => ride.id), (ridesData) => {
-        console.log(ridesData)
+        updateRealTimeData(ridesData)
     })
     setInterval(retrieveRidesList, 5000)
 })
@@ -78,6 +93,15 @@ onMounted(async () => {
                     layer-type="base"
                     name="OpenStreetMap"
             ></l-tile-layer>
+            <l-marker v-for="ride in ridesPositions"
+                :lat-lng="{lng: ride.position[0], lat: ride.position[1]}"
+                :name="ride.line">
+                <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
+                    <div class="rounded-full flex flex-col justify-center items-center"  style="width: 20px; height: 20px; background-color: blue;">
+                        <span style="color: white;">{{ stopIndex + 1 }}</span>
+                    </div>
+                </l-icon>
+            </l-marker>
             </l-map>
         </div>
         <div class="col-span-6 md:col-span-3 flex flex-col items-center">
