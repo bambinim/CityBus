@@ -5,6 +5,7 @@ class WebSocketClass {
     constructor(namespace) {
         this.namespace = namespace;
         this.socket = null;
+        this.created = false;
         this.createSocket();
     }
 
@@ -13,11 +14,17 @@ class WebSocketClass {
         this.socket = io(this.namespace, {
             extraHeaders: {'Authorization': authHeader}
         });
+        this.created = true;
+    }
+
+    async updateAuthHeader() {
+        const authHeader = await requests.authorizationHeader();
+        this.socket._opts.extraHeaders = {'Authorization': authHeader}
     }
 
     async verifySocketHealth() {
-        if (!this.socket || !this.socket.connected) {
-            await this.createSocket();
+        if (this.created && !this.socket.connected) {
+            await this.updateAuthHeader();
         }
     }
 
