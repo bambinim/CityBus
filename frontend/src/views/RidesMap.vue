@@ -38,7 +38,9 @@ const convertRidesToLines = () => {
 }
 
 const updateRealTimeData = (ridesData) => {
-    realTimeData.value = Object.fromEntries(ridesData.map(ride => [ride.rideId, ride]))
+    ridesData.forEach(ride => {
+        realTimeData.value[ride.rideId] = ride
+    });
 }
 
 const linesNodes = computed(() => Object.entries(convertRidesToLines()).map(([lineId, line]) => {
@@ -56,18 +58,20 @@ const linesNodes = computed(() => Object.entries(convertRidesToLines()).map(([li
 }))
 
 const ridesPositions = computed(() => rides.value.map(ride => {
-    if (realTimeData.value[ride.id]) {
-        return {
-            id: ride.id,
-            line: ride.line.name,
-            position: realTimeData.value[ride.id].position
-        }
+    if (!realTimeData.value[ride.id]) {
+        return;
     }
-}))
+    return {
+        id: ride.id,
+        line: ride.line.name,
+        position: realTimeData.value[ride.id].position
+    };
+}).filter(ride => ride));
 
 const retrieveRidesList = async () => {
     try {
         rides.value = await BusRideService.getBusRidesList()
+        socket.emit('subscribe', rides.value.map(ride => ride.id))
     } catch {
         rides.value = []
     }
@@ -78,6 +82,7 @@ onMounted(async () => {
     socket.emit('get-rides', rides.value.map(ride => ride.id), (ridesData) => {
         updateRealTimeData(ridesData)
     })
+    socket.on('update', data => updateRealTimeData([data]))
     setInterval(retrieveRidesList, 5000)
 })
 
@@ -94,11 +99,10 @@ onMounted(async () => {
                     name="OpenStreetMap"
             ></l-tile-layer>
             <l-marker v-for="ride in ridesPositions"
-                :lat-lng="{lng: ride.position[0], lat: ride.position[1]}"
-                :name="ride.line">
+                :lat-lng="{lng: ride.position[0], lat: ride.position[1]}">
                 <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
                     <div class="rounded-full flex flex-col justify-center items-center"  style="width: 20px; height: 20px; background-color: blue;">
-                        <span style="color: white;">{{ stopIndex + 1 }}</span>
+                        <span style="color: white;">{{ ride.line }}</span>
                     </div>
                 </l-icon>
             </l-marker>

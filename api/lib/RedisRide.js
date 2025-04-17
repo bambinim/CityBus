@@ -53,7 +53,7 @@ class RideDataEvent {
     async subscribe(rideIds) {
         await this.client.subscribe(rideIds, async (message, channel) => {
             const rideData = JSON.parse(message)
-            rideData.rideId = channel
+            rideData.rideId = channel.replace(':update', '')
             this.listeners.forEach(l => l(rideData))
         })
     }

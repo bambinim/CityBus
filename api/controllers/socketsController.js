@@ -129,6 +129,7 @@ module.exports = {
         const rideDataEvent = new RideDataEvent()
         rideDataEvent.connect()
         rideDataEvent.onMessage((rideData) => {
+            Logger.debug(`Sending update: ${rideData}`)
             socket.emit('update', rideData)
         })
 
@@ -148,7 +149,7 @@ module.exports = {
         })
         // subscribe to rides updates
         socket.on('subscribe', async (rides) => {
-            await rideDataEvent.subscribe(rides)
+            await rideDataEvent.subscribe(rides.map(r => `${r}:update`))
         })
     }
 }
