@@ -69,6 +69,7 @@ exports.getRidesList = async (req, res) => {
         res.json(rides.map(ride => {
             return {
                 id: ride._id,
+                scheduledDepartureTimestamp: ride.scheduledDepartureTimestamp,
                 line: {
                     id: ride.lineId._id,
                     name: ride.lineId.name,

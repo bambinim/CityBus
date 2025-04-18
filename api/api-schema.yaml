@@ -949,6 +949,8 @@ paths:
                   properties:
                     id:
                       type: string
+                    scheduledDepartureTimestamp:
+                      type: number
                     line:
                       $ref: "#/components/schemas/LineDirection"
         '401':
