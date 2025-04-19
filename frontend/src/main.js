@@ -8,6 +8,7 @@ import Aura from '@primevue/themes/aura';
 import PrimeVue from 'primevue/config';
 import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
+import Tooltip from 'primevue/tooltip';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 import '@/assets/styles.scss';
@@ -31,4 +32,5 @@ app.use(ConfirmationService);
 loadComponents(app);
 
 app.component('font-awesome-icon', FontAwesomeIcon)
+app.directive('tooltip', Tooltip);
 app.mount('#app');

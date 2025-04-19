@@ -57,6 +57,7 @@ const addTime = () => {
             return lastTime;
         }))
     );
+    busLine.value.directions[currentTab.value].timetable.sort((a, b) => a[0].hour - b[0].hour != 0 ? a[0].hour - b[0].hour : a[0].minute - b[0].minute)
 }
 
 const removeTimes = () => {
