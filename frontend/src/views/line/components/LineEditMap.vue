@@ -28,7 +28,7 @@
                     </div>
                 </l-icon>
             </l-marker>
-            <l-marker :lat-lng="marker.latlng" v-if="marker.visible" @update:visible="v => marker.visible = v" draggable @update:latLng="updateMarkerCoordinates" @update:lat-lng="updateMarkerCoordinates">
+            <l-marker :lat-lng="marker.latlng" v-if="marker.visible" @update:visible="v => marker.visible = v" draggable @update:latLng="updateMarkerCoordinates">
                 <l-popup v-if="popup.visible">
                     <div class="flex flex-col">
                         <InputText placeholder="Nome fermata" v-model="stopName" />
@@ -99,10 +99,9 @@ const nominatimSearch = async (event) => {
 
 const autoCompleteValueSelected = (event) => {
     center.value = [searchValue.value.lat, searchValue.value.lon]
-    marker.value = {
-        visible: true,
-        latlng: {lat: searchValue.value.lat, lng: searchValue.value.lon}
-    }
+    marker.value.visible = true
+    marker.value.latlng = {lat: searchValue.value.lat, lng: searchValue.value.lon}
+    popup.value.visible = true
 }
 
 </script>
