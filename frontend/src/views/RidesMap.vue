@@ -180,9 +180,9 @@ const expand = (node) => {
                             <span v-if="scope.node.children">{{ scope.node.label }}</span>
                             <span v-else>{{ scope.node.label }}</span>
                         </div>
-                        <div v-if="!scope.node.children && scope.node.minutesLate">
-                            <font-awesome-icon class="text-green-600" v-if="scope.node.minutesLate == 0" :icon="faClock" />
-                            <span class="font-bold text-red-600">+{{ scope.node.minutesLate }}</span>
+                        <div v-if="!scope.node.children && scope.node.minutesLate != undefined">
+                            <font-awesome-icon v-tooltip="'In orario'" class="text-green-600" v-if="scope.node.minutesLate == 0" :icon="faClock" />
+                            <span v-else class="font-bold text-red-600">+{{ scope.node.minutesLate }}</span>
                         </div>
                         <Button v-if="hiddenKeys.has(scope.node.key)" severity="contrast" variant="text" rounded aria-label="Mostra" @click="_ => show(scope.node)">
                             <font-awesome-icon :icon="faEyeSlash" />
