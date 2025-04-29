@@ -20,6 +20,12 @@ class RideAgent{
         this.interval = setInterval(async () => {
             if (this.socket) {
                 const position = await getBusPosition(this.ride)
+                if (!position) {
+                    this.ride.stops.forEach(stop => stop.isBusPassed = true)
+                    await this.ride.save()
+                    this.stop()
+                    return
+                }
                 this.socket.emit("put", JSON.stringify(position))
             }
         }, 1000)

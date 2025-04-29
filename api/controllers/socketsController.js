@@ -31,6 +31,7 @@ const getTimeToNextStop = ({ routeToNext, currentStepIndex, position }) => {
 
 const calculateRealTimeRideData = async ({ rideId, position }) => {
     const ride = await BusRide.findById(rideId).exec()
+    console.log(position)
     const currentRouteLeg = (await Route.aggregate([
         {"$geoNear": {
                 near: {coordinates: position, type: 'Point'},
@@ -99,8 +100,8 @@ module.exports = {
         await rideDataEvent.subscribe([`${rideId}:update`]);
 
         rideDataEvent.onMessage((rideData) => {
-            if (rideData.rideId === `${rideId}:update`) {
-                // Logger.debug(`Inoltro aggiornamento ricevuto da Redis a WebSocket`);
+            if (rideData.rideId === `${rideId}`) {
+                Logger.debug(`Inoltro aggiornamento ricevuto da Redis a WebSocket`);
                 socket.emit('ride_update', rideData);
             }
         });

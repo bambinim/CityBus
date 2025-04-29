@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { LMap, LTileLayer, LControlZoom, LMarker, LIcon } from "@vue-leaflet/vue-leaflet";
 import { faEye, faEyeSlash, faArrowRightArrowLeft, faBus, faRoute, faClock } from '@fortawesome/free-solid-svg-icons';
 import { BusRideService } from '@/service/BusRideService';
@@ -11,6 +11,7 @@ const selectButtonOptions = ref([
     { name: 'Solo Ritardi', value: 1 }
 ])
 
+const rideToViewIndex = ref(null)
 const mapCenter = ref([44.136352, 12.242244])
 const mapZoom = ref(13)
 const rides = ref([])
@@ -18,6 +19,8 @@ const realTimeData = ref({})
 const hiddenKeys = ref(new Set())
 const expandedKeys = ref({})
 const socket = new WebSocket('/rides')
+
+
 
 const convertRidesToLines = () => {
     const lines = {}
@@ -134,20 +137,31 @@ const expand = (node) => {
     node.children.forEach(expand);
 }
 
+watch(ridesPositions, (newRidesPosition) => {
+    if (rideToViewIndex.value == null) {
+        return;
+    }
+    mapCenter.value = [newRidesPosition[rideToViewIndex.value].position[1], 
+                        newRidesPosition[rideToViewIndex.value].position[0]];
+    mapZoom.value = 15;
+});
+
+
 </script>
 <template>
     <AppMenu />
     <div class="grid grid-cols-12 absolute bottom-0 w-full" style="top: 50px">
         <div class="col-span-6 md:col-span-9">
-            <l-map ref="map" v-model:zoom="mapZoom" :center="mapCenter" :useGlobalLeaflet="false" :options="{zoomControl: false}">
+            <l-map ref="map" v-model:zoom="mapZoom" :center="mapCenter" :useGlobalLeaflet="false" :options="{zoomControl: false}" :zoomAnimation="true" :markerZoomAnimation="true">
                 <l-control-zoom position="bottomright"></l-control-zoom>
                 <l-tile-layer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     layer-type="base"
                     name="OpenStreetMap"
             ></l-tile-layer>
-            <l-marker v-for="ride in ridesPositions"
-                :lat-lng="{lng: ride.position[0], lat: ride.position[1]}">
+            <l-marker v-for="(ride, idx) in ridesPositions"
+                :lat-lng="{lng: ride.position[0], lat: ride.position[1]}"
+                @click="_ => rideToViewIndex = idx">
                 <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
                     <div class="rounded-full flex flex-col justify-center items-center"  style="width: 20px; height: 20px; background-color: blue;">
                         <span style="color: white;">{{ ride.line }}</span>

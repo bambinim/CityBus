@@ -31,7 +31,10 @@ async function getBusPosition(ride){
         }
         const elapsedTime = (currentTimestamp - previousStopTime) / 1000;
         const totalTravelTime = (nextStopTime - previousStopTime) / 1000; 
-        if (elapsedTime >= totalTravelTime) {   
+        if (elapsedTime >= totalTravelTime) {
+            if (nextStopIndex === ride.stops.length - 1) {
+                return null
+            }
             const route = await BusRouteService.getRoute(nextStop.stopId, ride.directionId);
             return route.path[0].coordinates[0];
         }

@@ -1,5 +1,5 @@
-import socketRequests from "@/lib/socketRequests";
 import { useBusRideStore } from '@/stores/ride';
+import socketRequests from "@/lib/socketRequests";
 
 
 export class BusSimulator {
@@ -27,24 +27,11 @@ export class BusSimulator {
             this.busRideStore.setRideInfo(this.rideId)
             this.socket = await socketRequests.connect(`/rides/${this.rideId}/position`);
 
-            this.socket.on("error", (error) => {
-                console.error("Errore WebSocket:", error);
-                this.reset()
-                if (onError) onError("Errore di connessione WebSocket");
-            });
-
             this.socket.on("ride_update", (data) => {
                 this.busRideStore.updateRideData(data);
-                if (!this.isReady) this.isReady = true
             });
 
-            this.socket.on("disconnect", () => {
-                console.log("WebSocket disconnesso.");
-            })
 
-            this.socket.on("connect", () => {
-                console.log("WebSocket connesso.");
-            })
 
         } catch (error) {
             console.error("Errore nella connessione WebSocket:", error);

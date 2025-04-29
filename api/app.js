@@ -69,6 +69,7 @@ async function runDevelopmentServer() {
     const swaggerUi = require("swagger-ui-express");
     const apiSchema = fs.readFileSync("./api-schema.yaml", "utf-8");
     app.use("/ui", swaggerUi.serve, swaggerUi.setup(YAML.parse(apiSchema)));
+    
     server.listen(3001, () => {
         Logger.info(`Development server listening on port ${3001}`);
     })
