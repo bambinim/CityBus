@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import { LMap, LTileLayer, LControlZoom, LMarker, LIcon } from "@vue-leaflet/vue-leaflet";
+import { LMap, LTileLayer, LControlZoom, LMarker, LIcon, LPopup } from "@vue-leaflet/vue-leaflet";
 import { faEye, faEyeSlash, faArrowRightArrowLeft, faBus, faRoute, faClock } from '@fortawesome/free-solid-svg-icons';
 import { BusRideService } from '@/service/BusRideService';
 import { WebSocket } from '@/lib/websocket'
@@ -11,7 +11,7 @@ const selectButtonOptions = ref([
     { name: 'Solo Ritardi', value: 1 }
 ])
 
-const rideToViewIndex = ref(null)
+const rideToFollow = ref(null)
 const mapCenter = ref([44.136352, 12.242244])
 const mapZoom = ref(13)
 const rides = ref([])
@@ -137,13 +137,15 @@ const expand = (node) => {
     node.children.forEach(expand);
 }
 
+
 watch(ridesPositions, (newRidesPosition) => {
-    if (rideToViewIndex.value == null) {
+    if (rideToFollow.value == null) {
         return;
     }
-    mapCenter.value = [newRidesPosition[rideToViewIndex.value].position[1], 
-                        newRidesPosition[rideToViewIndex.value].position[0]];
-    mapZoom.value = 15;
+    const rides = newRidesPosition.find(ride => ride.id.toString() === rideToFollow.value)
+    mapCenter.value = [rides.position[1], 
+                        rides.position[0]];
+    mapZoom.value = 16;
 });
 
 
@@ -152,22 +154,21 @@ watch(ridesPositions, (newRidesPosition) => {
     <AppMenu />
     <div class="grid grid-cols-12 absolute bottom-0 w-full" style="top: 50px">
         <div class="col-span-6 md:col-span-9">
-            <l-map ref="map" v-model:zoom="mapZoom" :center="mapCenter" :useGlobalLeaflet="false" :options="{zoomControl: false}" :zoomAnimation="true" :markerZoomAnimation="true">
+            <l-map ref="map" @mousedown="rideToFollow = null" v-model:zoom="mapZoom" :center="mapCenter" :useGlobalLeaflet="false" :options="{zoomControl: false}" :zoomAnimation="true" :markerZoomAnimation="true">
                 <l-control-zoom position="bottomright"></l-control-zoom>
                 <l-tile-layer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     layer-type="base"
                     name="OpenStreetMap"
-            ></l-tile-layer>
-            <l-marker v-for="(ride, idx) in ridesPositions"
-                :lat-lng="{lng: ride.position[0], lat: ride.position[1]}"
-                @click="_ => rideToViewIndex = idx">
-                <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
-                    <div class="rounded-full flex flex-col justify-center items-center"  style="width: 20px; height: 20px; background-color: blue;">
-                        <span style="color: white;">{{ ride.line }}</span>
-                    </div>
-                </l-icon>
-            </l-marker>
+                ></l-tile-layer>
+                <l-marker v-for="(ride, idx) in ridesPositions"
+                :lat-lng="{lng: ride.position[0], lat: ride.position[1]}" >
+                    <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
+                        <div class="rounded-full flex flex-col justify-center items-center"  style="width: 20px; height: 20px; background-color: blue;">
+                            <span style="color: white;">{{ ride.line }}</span>
+                        </div>
+                    </l-icon>
+                </l-marker>
             </l-map>
         </div>
         <div class="col-span-6 md:col-span-3 flex flex-col items-center">
@@ -186,7 +187,7 @@ watch(ridesPositions, (newRidesPosition) => {
             <Tree class="w-full" :value="linesNodes"
                 v-model:expanded-keys="expandedKeys">
                 <template #nodeicon="scope">
-                    <font-awesome-icon :icon="scope.node.icon" />
+                    <font-awesome-icon :icon="scope.node.icon" @click="_ => rideToFollow = scope.node.key"/>
                 </template>
                 <template #default="scope">
                     <div class="flex flex-row items-center justify-between w-full">
