@@ -2,6 +2,7 @@ const io = require("socket.io-client");
 const { getBusPosition } = require('./BusRideManagerUtils')
 const { generateAgentToken } = require('./AgentUtils')
 const config = require("../config");
+const { BusLine, BusRide } = require('../database');
 
 
 class RideAgent{
@@ -14,9 +15,14 @@ class RideAgent{
             }
         });
         this.interval = null
+
+        this.socket.on('ride_update', async (updatedData) => {
+            this.ride = await BusRide.findById(this.ride._id);
+        });
     }
 
     async start(){
+        
         this.interval = setInterval(async () => {
             if (this.socket) {
                 const position = await getBusPosition(this.ride)
@@ -32,7 +38,10 @@ class RideAgent{
     }
 
     stop(){
-        clearInterval(this.interval)
+        clearInterval(this.interval);
+        if (this.socket) {
+            this.socket.disconnect();
+        }
     }
 }
 

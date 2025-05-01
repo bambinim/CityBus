@@ -31,7 +31,6 @@ const getTimeToNextStop = ({ routeToNext, currentStepIndex, position }) => {
 
 const calculateRealTimeRideData = async ({ rideId, position }) => {
     const ride = await BusRide.findById(rideId).exec()
-    console.log(position)
     const currentRouteLeg = (await Route.aggregate([
         {"$geoNear": {
                 near: {coordinates: position, type: 'Point'},

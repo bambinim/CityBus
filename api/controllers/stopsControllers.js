@@ -105,7 +105,8 @@ exports.getDepartures = async (req, res) => {
                         stopId: stop._id,
                         expectedArrivalTimestamp: { $gte: departure_timestamp }
                     }
-                }
+                },
+                status: "running"
             });
 
             const rideData = new RideDataProvider()

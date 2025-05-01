@@ -23,7 +23,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { LMap, LTileLayer, LMarker, LPopup, LIcon, LPolyline, LControl, LControlZoom } from "@vue-leaflet/vue-leaflet";
-import { useBusRideStore } from '@/stores/ride';
+import { useBusRideStore } from '@/stores/ride'
 
 const busRideStore = useBusRideStore();
 const position = computed(() => busRideStore.position);
