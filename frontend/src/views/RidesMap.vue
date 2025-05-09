@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { LMap, LTileLayer, LControlZoom, LMarker, LIcon, LPopup } from "@vue-leaflet/vue-leaflet";
-import { faEye, faEyeSlash, faArrowRightArrowLeft, faBus, faRoute, faClock } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEyeSlash, faArrowRightArrowLeft, faBus, faRoute, faClock, faChevronUp, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { BusRideService } from '@/service/BusRideService';
 import { WebSocket } from '@/lib/websocket'
 
@@ -11,7 +11,9 @@ const selectButtonOptions = ref([
     { name: 'Solo Ritardi', value: 1 }
 ])
 
+const isExpanded = ref(false)
 const rideToFollow = ref(null)
+const cardInfo = ref({})
 const mapCenter = ref([44.136352, 12.242244])
 const mapZoom = ref(13)
 const rides = ref([])
@@ -142,10 +144,25 @@ watch(ridesPositions, (newRidesPosition) => {
     if (rideToFollow.value == null) {
         return;
     }
-    const rides = newRidesPosition.find(ride => ride.id.toString() === rideToFollow.value)
+    const rides = newRidesPosition.find(ride => ride.id.toString() === rideToFollow.value.key)
     mapCenter.value = [rides.position[1], 
                         rides.position[0]];
     mapZoom.value = 16;
+    linesNodes.value.filter(line => {
+        return line.children.map(dir => {
+            return dir.children.map(ride => {
+                if(ride.key == rideToFollow.value.key){
+                    cardInfo.value = {
+                        line: line.label,
+                        direction: dir.label,
+                        departureTime: rideToFollow.value.label,
+                        delay: rideToFollow.value.minutesLate
+                    }
+                }
+            })
+        })
+    })
+    console.log(rideToFollow.value)
 });
 
 
@@ -154,7 +171,7 @@ watch(ridesPositions, (newRidesPosition) => {
     <AppMenu />
     <div class="grid grid-cols-12 absolute bottom-0 w-full" style="top: 50px">
         <div class="col-span-6 md:col-span-9">
-            <l-map ref="map" @mousedown="rideToFollow = null" v-model:zoom="mapZoom" :center="mapCenter" :useGlobalLeaflet="false" :options="{zoomControl: false}" :zoomAnimation="true" :markerZoomAnimation="true">
+            <l-map ref="map" @mousedown="rideToFollow = null, cardInfo = {}" v-model:zoom="mapZoom" :center="mapCenter" :useGlobalLeaflet="false" :options="{zoomControl: false}" :zoomAnimation="true" :markerZoomAnimation="true">
                 <l-control-zoom position="bottomright"></l-control-zoom>
                 <l-tile-layer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -169,6 +186,32 @@ watch(ridesPositions, (newRidesPosition) => {
                         </div>
                     </l-icon>
                 </l-marker>
+                <div class="absolute top-2 right-2 z-[1000]">
+                    <Card @mouseenter="isExpanded = true" @mouseleave="isExpanded = false">
+                        <template #title>
+                            <div class="flex justify-between items-center cursor-pointer">
+                                <font-awesome-icon :icon="faBus" class="text-blue-500 text-lg" />
+                                <span class="text-lg font-semibold text-gray-800">{{cardInfo.direction}}</span>
+                                <font-awesome-icon :icon="isExpanded ? faChevronUp : faChevronDown" class="text-gray-600 cursor-pointer"/>
+                            </div>
+                        </template>
+                        <template #subtitle>
+                            <div class="rounded-lg text-white bg-blue-500 mr-2 text-center">
+                                {{ cardInfo.line }}
+                            </div>
+                        </template>
+                        <template #content>
+                            <div v-if="isExpanded">
+                                <div class="mt-1 text-gray-500 text-sm">
+                                    Orario di partenza: <span class="font-semibold text-gray-700">{{cardInfo.departureTime}}</span>
+                                </div>
+                                <div class="mt-1 text-gray-500 text-sm">
+                                    Ritardo: <span class="font-semibold" :class="cardInfo.delay > 0 ? 'text-red-500' : 'text-green-500'">{{cardInfo.delay}}</span>
+                                </div>
+                            </div>
+                        </template>
+                    </Card>
+                </div>
             </l-map>
         </div>
         <div class="col-span-6 md:col-span-3 flex flex-col items-center">
@@ -187,7 +230,7 @@ watch(ridesPositions, (newRidesPosition) => {
             <Tree class="w-full" :value="linesNodes"
                 v-model:expanded-keys="expandedKeys">
                 <template #nodeicon="scope">
-                    <font-awesome-icon :icon="scope.node.icon" @click="_ => rideToFollow = scope.node.key"/>
+                    <font-awesome-icon :icon="scope.node.icon" @click="_ => rideToFollow = scope.node"/>
                 </template>
                 <template #default="scope">
                     <div class="flex flex-row items-center justify-between w-full">

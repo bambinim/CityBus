@@ -12,6 +12,7 @@ class BusRideManager{
 
     async init(io){
         this.io = io
+        await BusRide.deleteMany({'status': "running"})
         this.startLoop()
     }
 

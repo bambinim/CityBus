@@ -36,7 +36,7 @@ async function getBusPosition(ride){
                 return null
             }
             const route = await BusRouteService.getRoute(nextStop.stopId, ride.directionId);
-            return route.path[0].coordinates[0];
+            return route.path[0].coordinates[1];
         }
         
         const route = await BusRouteService.getRoute(previousStop.stopId, ride.directionId);
