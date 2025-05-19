@@ -1,6 +1,6 @@
 <template>
     <div class="grid grid-cols-2 h-full grow">
-        <LineEditMap v-model="busLine" :direction-index="currentTab" class="col-span-2 xl:col-span-1 h-full mx-1 my-1"/>
+        <LineEditMap @new-stop="stop => newStops.push(stop)" v-model="busLine" :direction-index="currentTab" class="col-span-2 xl:col-span-1 h-full mx-1 my-1"/>
         <Tabs class="col-span-2 xl:col-span-1 flex flex-col h-full mx-1 my-1" v-model:value="currentTab">
             <TabList>
                 <Tab v-for="(direction, indexDir) in busLine.directions" :value="indexDir">{{ direction.name }}</Tab>
@@ -21,7 +21,7 @@
                             </draggable>
                             <div class="flex flex-col">
                                 <!-- <Button icon="pi pi-plus" class="mt-3" label="Aggiungi fermata esistente" severity="secondary" />-->
-                                <StopSelector @stop-selected="el => busLine.directions[currentTab].stops.push(el)" />
+                                <StopSelector :newStops="newStops" @stop-selected="el => busLine.directions[currentTab].stops.push(el)" />
                                 <Button class="mt-3" label="Genera percorso" @click="generateRoute">
                                     <template #icon>
                                         <font-awesome-icon :icon="faRoute" />
@@ -64,6 +64,7 @@ import StopSelector from './StopSelector.vue';
 
 const toast = useToast();
 
+const newStops = ref([])
 const busLine = defineModel()
 const currentTab = ref(0)
 

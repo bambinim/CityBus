@@ -4,6 +4,7 @@ import { BusStopService } from '@/service/BusStopService';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { useToast } from 'primevue';
 
+const props = defineProps(['newStops'])
 const emit = defineEmits(['stop-selected'])
 const toast = useToast();
 const selectedStop = ref(undefined)
@@ -11,6 +12,7 @@ const stopOptions = ref([])
 const loadOptions = async (event) => {
     try {
         stopOptions.value = await BusStopService.searchBusStops({search: event.query})
+        props.newStops.forEach(stop => stopOptions.value.push(stop))
     } catch (err) {
         toast.add({severity: 'error', summary: err, life: 3000 })
     }
@@ -24,6 +26,7 @@ const closeInplace = (callback) => {
 const stopSelected = (callback) => {
     callback();
     emit('stop-selected', selectedStop.value)
+    console.log(selectedStop.value)
     selectedStop.value = undefined
 }
 

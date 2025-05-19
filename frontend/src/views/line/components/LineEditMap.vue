@@ -52,6 +52,8 @@ import { LMap, LTileLayer, LMarker, LPopup, LIcon, LPolyline, LControl, LControl
 import { NominatimService } from '@/service/NominatimService';
 import { useToast } from 'primevue/usetoast';
 
+const emit = defineEmits(['new-stop'])
+
 const props = defineProps(['directionIndex'])
 const zoom = ref(13)
 const center = ref([44.136352, 12.242244])
@@ -63,11 +65,15 @@ const searchValue = ref({})
 const searchSuggestions = ref([])
 const toast = useToast();
 
+const newStop = ref({})
+
 async function createStop() {
-    busLine.value.directions[props.directionIndex].stops.push({
+    newStop.value = {
         name: stopName.value,
         location: { type: 'Point', coordinates: [marker.value.latlng.lng, marker.value.latlng.lat] }
-    })
+    }
+    busLine.value.directions[props.directionIndex].stops.push(newStop.value)
+    emit('new-stop', newStop.value)
     stopName.value = ''
     marker.value.visible = false
 }

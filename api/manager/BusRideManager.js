@@ -12,7 +12,21 @@ class BusRideManager{
 
     async init(io){
         this.io = io
-        await BusRide.deleteMany({'status': "running"})
+        await BusRide.updateMany(
+            {
+                'status': "running", 
+                $expr: {
+                    $gte: [
+                        {
+                            $arrayElemAt:
+                                ['$stops.expectedArrivalTimestamp', -1] },
+                                new Date()
+                        
+                    ]
+                }
+            },
+            { $set: {status: 'finished'}}
+        )
         this.startLoop()
     }
 

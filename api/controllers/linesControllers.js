@@ -5,54 +5,84 @@ const { BusLine, BusStop, Route, StopsConnection } = require('../database');
 const { Logger } = require('../logging');
 
 
-const processDirections = ({ session, directions }) => {
-    return Promise.all(directions.map(async direction => {
-        const stops = await Promise.all(direction.stops.map(async (stop, index) => {
-            let stopDoc = undefined
-            if(typeof stop === "string"){
-                stopDoc = await BusStop.findOne({ _id: stop }).exec();
-            }else{
-                stopDoc = await BusStop.findOne({name: stop.name, location: stop.location}).exec()
+const processDirections = async ({ session, directions }) => {
+    const stopCache = new Map();
+
+    const processed = [];
+
+    for (const direction of directions) {
+        const stops = [];
+
+        for (let i = 0; i < direction.stops.length; i++) {
+        const rawStop = direction.stops[i];
+
+        const key = typeof rawStop === 'string'
+            ? rawStop
+            : `${rawStop.name}-${JSON.stringify(rawStop.location)}`;
+
+        let stopDoc = stopCache.get(key);
+        if (!stopDoc) {
+            if (typeof rawStop === 'string') {
+                stopDoc = await BusStop
+                    .findOne({ _id: rawStop })
+                    .session(session)
+                    .exec();
+                } else {
+                stopDoc = await BusStop
+                    .findOne({ name: rawStop.name, location: rawStop.location })
+                    .session(session)
+                    .exec();
             }
-            
-            if(!stopDoc){
-                stopDoc = new BusStop({name: stop.name, location: stop.location})
-            }
-            await stopDoc.save({ session })
-            let routeToNext = undefined
-            if (index < direction.stops.length-1) {
-                routeToNext = new Route({
-                    path: direction.routeLegs[index].steps,
-                    type: 'partial'
-                })
-                routeToNext.save({ session })
+            if (!stopDoc) {
+                stopDoc = new BusStop({
+                    name: rawStop.name,
+                    location: rawStop.location
+                });
+                await stopDoc.save({ session });
             }
 
-            return {
-                stopId: stopDoc ? stopDoc._id : mongoose.Types.ObjectId(), 
-                name: stopDoc.name,
-                routeToNext: routeToNext ? routeToNext._id : undefined,
-                timeToNext: index === direction.stops.length-1 ? 0 : direction.routeLegs[index].duration
-            };
-        }));
+            stopCache.set(key, stopDoc);
+        }
 
+        let routeToNext;
+        if (i < direction.stops.length - 1) {
+            routeToNext = new Route({
+            path: direction.routeLegs[i].steps,
+            type: 'partial'
+            });
+            await routeToNext.save({ session });
+        }
+
+        stops.push({
+            stopId: stopDoc._id,
+            name: stopDoc.name,
+            routeToNext: routeToNext?._id,
+            timeToNext: i === direction.stops.length - 1
+            ? 0
+            : direction.routeLegs[i].duration
+        });
+        }
 
         const fullRoute = new Route({
-            path: direction.routeLegs.flatMap(leg => leg.steps.map(step => ({
-                duration: step.duration,
-                geometry: step.geometry
-            }))),
-            type: 'full'
-        })
-        fullRoute.save({ session })
+        path: direction.routeLegs.flatMap(leg =>
+            leg.steps.map(step => ({
+            duration: step.duration,
+            geometry: step.geometry
+            }))
+        ),
+        type: 'full'
+        });
+        await fullRoute.save({ session });
 
-        return {
+        processed.push({
             name: direction.name,
-            stops: stops,
+            stops,
             timetable: direction.timetable,
             fullRoute: fullRoute._id
-        };
-    }));
+        });
+    }
+
+    return processed;
 }
 
 const updateLinesCollateralCollections = async ({ session, busLine }) => {
