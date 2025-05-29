@@ -162,7 +162,6 @@ watch(ridesPositions, (newRidesPosition) => {
             })
         })
     })
-    console.log(rideToFollow.value)
 });
 
 

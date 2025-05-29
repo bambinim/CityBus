@@ -8,10 +8,12 @@ import BusLinesTableView from '@/views/line/BusLinesTable.vue'
 import RidesMap from '@/views/RidesMap.vue'
 import { useUserStore } from '@/stores/user'
 import { UsersService } from '@/service/UsersService'
+import Navigation from '@/views/navigation/Navigation.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    {path: '/', component: Navigation, meta: {requiresAuth: true}},
     {path: '/login', component: LoginView},
     {path: '/registration', component: RegistrationView},
     {path: '/home', component: TemplateView, meta: {requiresAuth: true}},
