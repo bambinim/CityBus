@@ -24,12 +24,12 @@
                     <l-icon>
                         <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
                             <div class="rounded-full flex flex-col justify-center items-center"  style="width: 20px; height: 20px; background-color: blue;">
-                                <span style="color: white;">{{ index + 1 }}</span>
+                                <span style="color: white;">{{ leg.type == 'bus' ? leg.line.name : '' }}</span>
                             </div>
                         </l-icon>
                     </l-icon>
                 </l-marker>
-                <l-polyline :latLngs="routeSteps()" color="blue">
+                <l-polyline v-for="(leg, index) in props.bestPath.legs" :latLngs="routeSteps(leg)" :dash-array="leg.type == 'foot' ? '5, 10' : ''" color="blue">
                 </l-polyline>
             </template>
         </l-map>
@@ -40,6 +40,7 @@
 import { ref, watch } from 'vue';
 import { LMap, LTileLayer, LMarker, LPopup, LIcon, LPolyline, LControl, LControlZoom } from "@vue-leaflet/vue-leaflet";
 import { Steps } from 'primevue';
+import LineEditMap from '../line/components/LineEditMap.vue';
 
 const zoom = ref(13);
 const departure = ref({ visible: false, latlng: null });
@@ -52,6 +53,9 @@ const props = defineProps(['bestPath'])
 
 const emit = defineEmits(['update:departure', 'update:arrival']);
 
+watch( () => props.bestPath, (oldPath, newPath)=> {
+   reset()
+})
 
 const handleMapClick = (event) => {
     const latlng = event.latlng;
@@ -72,16 +76,12 @@ const selectMarker = (event) => {
     markerSelected.value = '';
 }
 
-const routeSteps = () => {
-    const step = props.bestPath.legs.flatMap(leg => {
-        if(leg.type == 'foot'){
-            return leg.steps.coordinates.map(coord => [coord[1], coord[0]])
-        }else{
-            return leg.stops.flatMap(stop => stop.routeToNext.coordinates.map(coord => [coord[1], coord[0]]))
-        }
-    })
-    reset()
-    return step
+const routeSteps = (leg) => {
+    if(leg.type == 'foot'){
+        return leg.steps.coordinates.map(coord => [coord[1], coord[0]])
+    }else{
+        return leg.stops.flatMap(stop => stop.routeToNext.coordinates.map(coord => [coord[1], coord[0]]))
+    }
 }
 
 const reset = () => {

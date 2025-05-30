@@ -33,7 +33,7 @@ const onFormSubmit = ({ valid, values }) => {
         authStore.setTokens(jwt, renewToken);
         toast.add({severity: 'success', summary: 'Autenticazione effettuata con successo. Verrai reindirizzato automaticamente', life: 3000 })
         setTimeout(() => {
-            router.push({ path: '/home' })
+            router.push({ path: '/' })
         }, 3000);
     }).catch(err => {
         toast.add({severity: 'error', summary: err, life: 3000 })
