@@ -1,7 +1,8 @@
 const axios = require('axios');
 const {Route, BusLine, BusStop} = require('../database');
 const { BusRouteService } = require('../services/BusRouteServices');
-const { getNavigationPath } = require('../pathFinder/pathFinder')
+const { getNavigationPath } = require('../pathFinder/pathFinder');
+const { coordinatesDistance } = require('../lib/utils');
 
 
 exports.generateRoutes = async (req, res) => {
@@ -67,6 +68,7 @@ exports.getNavigationRoutes = async (req, res) => {
     date.setHours(departureTime.split(':')[0], departureTime.split(':')[1], 0, 0);
     const departureCoords = departure.split(';').map(coord => parseFloat(coord));
     const arrivalCoords = arrival.split(';').map(coord => parseFloat(coord));
+    console.log(departureCoords)
     const departureStops = await BusStop.aggregate([
         {
             $geoNear: {
@@ -94,7 +96,7 @@ exports.getNavigationRoutes = async (req, res) => {
     for( const departure of departureStops) {
         for (const arrival of arrivalStops) {
             if (departure._id.toString() !== arrival._id.toString()) {
-                const path = await getNavigationPath({departureStop: departure._id, arrivalStop: arrival._id, departureTime: date})
+                const path = await getNavigationPath({departureStop: departure, arrivalStop: arrival, departureCoords: departureCoords, arrivalCoords: arrivalCoords, departureTime: date})
                 if(path.length > 0) {
                     paths.push(path)
                 }
@@ -106,56 +108,85 @@ exports.getNavigationRoutes = async (req, res) => {
         const lastB = b[b.length - 1];
         return new Date(lastA.arrivalTime) - new Date(lastB.arrivalTime);
     });
+
     const departureTimestamp = new Date(paths[0][0].departureTime).getTime();
     const arrivalTimestamp = new Date(paths[0][paths[0].length - 1].arrivalTime).getTime();
     const totalDuration = (arrivalTimestamp - departureTimestamp) / 1000; 
 
     const legs = await Promise.all(paths[0].map(async (leg) => {
+        let type = null
         const duration = (new Date(leg.arrivalTime).getTime() - new Date(leg.departureTime)) / 1000
         const departureTimestamp = new Date(leg.departureTime).getTime()
         const arrivalTimestamp = new Date(leg.arrivalTime).getTime()
-        const lineDir = await BusLine.findById(leg.lineid)
-        const line = lineDir.directions.filter(dir => dir._id.toString() === leg.directionId).map(dir => {
+        if(leg.travelMode == 'foot'){
+            type = 'foot'
+            let coordsString = null
+            if (leg['@id'] == 'footDeparture'){
+                const stop = await BusStop.findById(leg.arrivalStop)
+                coordsString = `${departureCoords[0]},${departureCoords[1]};${stop.location.coordinates[0]},${stop.location.coordinates[1]}`
+            }else{
+                const stop = await BusStop.findById(leg.departureStop)
+                coordsString = `${stop.location.coordinates[0]},${stop.location.coordinates[1]};${arrivalCoords[0]},${arrivalCoords[1]}`
+            }
+            const response = await axios.get(`http://router.project-osrm.org/route/v1/foot/${coordsString}?overview=full&geometries=geojson&steps=true`);
+            const route = response.data.routes[0];
+            const steps = {
+                type: 'LineString',
+                coordinates: route.geometry.coordinates
+            }
             return {
-                id: leg.lineid,
-                name: lineDir.name,
-                direction: {
-                    id: dir._id,
-                    name: dir.name
+                type: type, 
+                duration: duration,
+                departureTimestamp: departureTimestamp,
+                arrivalTimestamp: arrivalTimestamp,
+                steps: steps
+            }
+        }else{
+            type = 'bus'
+            const lineDir = await BusLine.findById(leg.lineid)
+            const line = lineDir.directions.filter(dir => dir._id.toString() === leg.directionId).map(dir => {
+                return {
+                    id: leg.lineid,
+                    name: lineDir.name,
+                    direction: {
+                        id: dir._id,
+                        name: dir.name
+                    }
                 }
-            }
-        })[0]
-        const stopsInfo = await BusStop.find({
-            '_id': {
-                $in: [leg.departureStop, leg.arrivalStop]
-            }
-        })
+            })[0]
+            const stopsInfo = await BusStop.find({
+                '_id': {
+                    $in: [leg.departureStop, leg.arrivalStop]
+                }
+            })
 
-        const stops = await Promise.all(stopsInfo.map(async stop => {
-            const dir = lineDir.directions.find(dir => dir._id.toString() === leg.directionId);
-            const stopData = dir.stops.find(s => s.stopId.toString() === leg.departureStop);
-            let routeToNext = null;
-            if (stopData && stopData.routeToNext) {
-                const route = await Route.findById(stopData.routeToNext);
-                routeToNext = {
-                    type: "LineString",
-                    coordinates: route ? route.path.flatMap(segment => segment.geometry.coordinates) : []
+            const stops = await Promise.all(stopsInfo.map(async (stop, index) => {
+                const dir = lineDir.directions.find(dir => dir._id.toString() === leg.directionId);
+                const stopData = dir.stops.find(s => s.stopId.toString() === leg.departureStop);
+                let routeToNext = null;
+                if (index == 0) {
+                    const route = await Route.findById(stopData.routeToNext);
+                    routeToNext = {
+                        type: "LineString",
+                        coordinates: route ? route.path.flatMap(segment => segment.geometry.coordinates) : []
+                    };
+                }
+                return {
+                    name: stop.name,
+                    location: stop.location,
+                    timeToNext: index == 0 ? stopData.timeToNext : 0,
+                    routeToNext: index == 0 ? routeToNext : { type: "LineString", coordinates: []}
                 };
-            }
-            return {
-                name: stop.name,
-                location: stop.location,
-                timeToNext: stopData ? stopData.timeToNext : null,
-                routeToNext: routeToNext
-            };
-        }));
+            }));
 
-        return {
-            duration: duration,
-            departureTimestamp: departureTimestamp,
-            arrivalTimestamp: arrivalTimestamp,
-            line: line,
-            stops: stops
+            return {
+                type: type,
+                duration: duration,
+                departureTimestamp: departureTimestamp,
+                arrivalTimestamp: arrivalTimestamp,
+                line: line,
+                stops: stops
+            }
         }
 
     }))

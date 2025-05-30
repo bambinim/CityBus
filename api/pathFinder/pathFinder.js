@@ -1,22 +1,34 @@
 const csa = require('csa');
 const { StopsConnection, BusLine } = require('../database');
 const { Readable } = require('stream');
+const { coordinatesDistance } = require('../lib/utils');
 
 
 async function getNavigationPath(data) {
-  const { departureStop, arrivalStop, departureTime } = data;
+  const { departureStop, arrivalStop, departureCoords, arrivalCoords, departureTime } = data;
 
 
   const planner = new csa.BasicCSA({
-    departureStop: departureStop,
-    arrivalStop: arrivalStop,
+    departureStop: 'departureLocation',
+    arrivalStop: 'arrivalLocation',
     departureTime: departureTime
   });
 
-
-  const connections = await StopsConnection.find();
   const conns = [];
+  let footConnNum = 0
 
+  const departureStopArrivalTime = getArrivalTime(departureCoords, departureStop.location.coordinates, departureTime)
+  const connections = await StopsConnection.find();
+  
+  conns.push({
+    '@id': 'footDeparture',
+    travelMode: 'foot',
+    departureStop: 'departureLocation',
+    departureTime: departureTime,
+    arrivalStop: departureStop._id.toString(),
+    arrivalTime: departureStopArrivalTime
+        
+  })
 
   for (const connection of connections) {
     for (const line of connection.lines) {
@@ -40,8 +52,21 @@ async function getNavigationPath(data) {
         departureTime.setHours(time[departureIndex].hour, time[departureIndex].minute, 1, 0);
         const arrivalTime = new Date();
         arrivalTime.setHours(time[departureIndex + 1].hour, time[departureIndex + 1].minute, 0, 0);
+        if(connection.to.toString() === arrivalStop._id.toString()){
+          const arrivalLocationArrivalTime = getArrivalTime(arrivalCoords, arrivalStop.location.coordinates, arrivalTime)
+          conns.push({
+            '@id': 'footArrival' + footConnNum,
+            travelMode: 'foot',
+            departureStop: connection.to.toString(),
+            departureTime: arrivalTime,
+            arrivalStop: 'arrivalLocation',
+            arrivalTime: arrivalLocationArrivalTime
+          })
+          footConnNum += 1
+        }
         conns.push({
           '@id': connection._id.toString(),
+          travelMode: 'bus',
           lineid: line.lineId.toString(),
           directionId: line.directionId.toString(),
           departureStop: connection.from.toString(),
@@ -53,14 +78,11 @@ async function getNavigationPath(data) {
     }
   }
 
-  console.log("Partenza:", departureStop, "Arrivo:", arrivalStop);
-
   conns.sort((a, b) => a.departureTime - b.departureTime);
 
   if (conns.length === 0) {
       return Promise.resolve([]);
   }
-  console.log(departureStop, arrivalStop, departureTime);
 
   return new Promise((resolve, reject) => {
     const connectionsReadStream = Readable.from(conns);
@@ -73,7 +95,7 @@ async function getNavigationPath(data) {
         resolve([]);
         connectionsReadStream.destroy();
       }
-    }, 500);
+    }, 100);
 
     connectionsReadStream.pipe(planner);
 
@@ -81,7 +103,7 @@ async function getNavigationPath(data) {
       if (!settled) {
         settled = true;
         clearTimeout(timeout);
-        console.log("Planner result event");
+        console.log(result);
         resolve(result);
         connectionsReadStream.destroy();
       }
@@ -107,6 +129,19 @@ async function getNavigationPath(data) {
       }
     });
   })
+}
+
+function getArrivalTime(departureCoords, arrivalCoords, departureTime){
+
+  const distance = coordinatesDistance(departureCoords[1], departureCoords[0], arrivalCoords[1], arrivalCoords[0], "K")
+
+  const timeHours = distance / 5
+
+  const travelMs = timeHours * 60 * 60 * 1000
+
+  const arrivalTime = new Date(departureTime.getTime() + travelMs)
+
+  return arrivalTime
 }
 
 module.exports = { getNavigationPath };

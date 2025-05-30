@@ -16,13 +16,30 @@
             </l-marker>
             <l-marker :lat-lng="arrival.latlng" v-if="arrival.visible">
             </l-marker>
+            <template v-if="props.bestPath">
+                <l-marker v-for="(leg, index) in props.bestPath.legs"
+                    :lat-lng="leg.type == 'foot' 
+                                    ? (index == 0 ? [leg.steps.coordinates[0][1], leg.steps.coordinates[0][0]] : [leg.steps.coordinates[leg.steps.coordinates.length - 1][1], leg.steps.coordinates[leg.steps.coordinates.length - 1][0]]) 
+                                    : [leg.stops[0].location.coordinates[1], leg.stops[0].location.coordinates[0]]">
+                    <l-icon>
+                        <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
+                            <div class="rounded-full flex flex-col justify-center items-center"  style="width: 20px; height: 20px; background-color: blue;">
+                                <span style="color: white;">{{ index + 1 }}</span>
+                            </div>
+                        </l-icon>
+                    </l-icon>
+                </l-marker>
+                <l-polyline :latLngs="routeSteps()" color="blue">
+                </l-polyline>
+            </template>
         </l-map>
     </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { LMap, LTileLayer, LMarker, LPopup, LIcon, LPolyline, LControl, LControlZoom } from "@vue-leaflet/vue-leaflet";
+import { Steps } from 'primevue';
 
 const zoom = ref(13);
 const departure = ref({ visible: false, latlng: null });
@@ -31,8 +48,10 @@ const marker = ref({ visible: false, latlng: null })
 const popup = ref({visible: false})
 const options = ref(['Partenza', 'Arrivo']);
 const markerSelected = ref('');
+const props = defineProps(['bestPath'])
 
 const emit = defineEmits(['update:departure', 'update:arrival']);
+
 
 const handleMapClick = (event) => {
     const latlng = event.latlng;
@@ -51,6 +70,23 @@ const selectMarker = (event) => {
     popup.value.visible = false;
     marker.value.visible = false;
     markerSelected.value = '';
+}
+
+const routeSteps = () => {
+    const step = props.bestPath.legs.flatMap(leg => {
+        if(leg.type == 'foot'){
+            return leg.steps.coordinates.map(coord => [coord[1], coord[0]])
+        }else{
+            return leg.stops.flatMap(stop => stop.routeToNext.coordinates.map(coord => [coord[1], coord[0]]))
+        }
+    })
+    reset()
+    return step
+}
+
+const reset = () => {
+    departure.value.visible = false
+    arrival.value.visible = false
 }
 
 

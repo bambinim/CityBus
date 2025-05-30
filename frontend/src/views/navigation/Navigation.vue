@@ -13,7 +13,7 @@
       </div>
     </div>
     <div class="col-span-4">
-      <NavigationMap :markerToSelect="markerToSelect" @update:departure="updateDeparture" @update:arrival="updateArrival"/>
+      <NavigationMap :bestPath="bestPath" @update:departure="updateDeparture" @update:arrival="updateArrival"/>
     </div>
   </div>
 </template>
@@ -26,9 +26,10 @@ import { ref } from 'vue'
 
 const departure = ref(null)
 const arrival = ref(null)
-const markerToSelect = ref('')
 const departureTime = ref('')
 const loading = ref(false);
+const bestPath = ref(null)
+const emit = defineEmits(['drawBestPath']);
 
 async function getPath() {
   loading.value = true
@@ -38,8 +39,9 @@ async function getPath() {
       arrival: arrival.value,
       departureTime: departureTime.value
     }
-    const res = await RouteService.getNavigationRoute(data)
-    console.log(res)
+    bestPath.value = await RouteService.getNavigationRoute(data)
+    console.log(bestPath.value)
+    emit('drawBestPath', bestPath.value)
     loading.value = false
   }
   catch (error) {
