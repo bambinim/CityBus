@@ -68,7 +68,6 @@ exports.getNavigationRoutes = async (req, res) => {
     date.setHours(departureTime.split(':')[0], departureTime.split(':')[1], 0, 0);
     const departureCoords = departure.split(';').map(coord => parseFloat(coord));
     const arrivalCoords = arrival.split(';').map(coord => parseFloat(coord));
-    console.log(departureCoords)
     const departureStops = await BusStop.aggregate([
         {
             $geoNear: {
@@ -102,6 +101,9 @@ exports.getNavigationRoutes = async (req, res) => {
                 }
             }
         }
+    }
+    if (paths.length === 0) {
+        return res.status(404).json({ message: "Nessun percorso trovato per i dati inseriti." });
     }
     paths.sort((a, b) => {
         const lastA = a[a.length - 1];

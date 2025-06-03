@@ -13,8 +13,8 @@
           <div class="row-span-3 grow w-full h-full mt-4" v-if="bestPath">
             <Timeline :value="bestPath.legs" align="alternate" class="customized-timeline">
                     <template #marker="slotProps">
-                      <div :style="{ backgroundColor: slotProps.item.type == 'bus' ? 'dodgerblue' : 'orange' }" class="rounded-full">
-                        <font-awesome-icon class="fa-2xl p-2" :icon="slotProps.item.type == 'bus' ? faBus : faPersonWalking" style="color: white;"/>
+                      <div :style="{ backgroundColor: slotProps.index == bestPath.legs.length - 1 ? 'red' : (slotProps.item.type == 'bus' ? 'dodgerblue' : 'orange') }" class="rounded-full">
+                        <font-awesome-icon class="fa-2xl p-2" :icon="slotProps.index == bestPath.legs.length - 1 ? faBullseye : (slotProps.item.type == 'bus' ? faBus : faPersonWalking)" style="color: white;"/>
                       </div>
                     </template>
                     <template #content="slotProps">
@@ -66,8 +66,11 @@
 import NavigationMap from './NavigationMap.vue'
 import { RouteService } from '@/service/RouteService'
 import { getTimeFromTimestamp } from '@/utils/DateUtils'
-import { faPersonWalking, faBus} from '@fortawesome/free-solid-svg-icons'
+import { faPersonWalking, faBus, faBullseye} from '@fortawesome/free-solid-svg-icons'
 import { ref } from 'vue'
+import { useToast } from 'primevue/usetoast'
+
+const toast = useToast();
 
 const departure = ref(null)
 const arrival = ref(null)
@@ -79,18 +82,47 @@ const emit = defineEmits(['drawBestPath']);
 async function getPath() {
   loading.value = true
   try {
+    if (!departure.value || !arrival.value) {
+      toast.add({ severity: 'warn', summary: 'Attenzione', detail: 'Inserisci sia partenza che arrivo', life: 3000 });
+      loading.value = false
+      return;
+    }
+    const latLngRegex = /^LatLng\((-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)\)$/;
+    if (!latLngRegex.test(departure.value)) {
+      toast.add({ severity: 'warn', summary: 'Attenzione', detail: 'La partenza deve essere nel formato LatLng(lat, lng)', life: 4000 });
+      loading.value = false
+      return;
+    }
+    if (!latLngRegex.test(arrival.value)) {
+      toast.add({ severity: 'warn', summary: 'Attenzione', detail: 'L\'arrivo deve essere nel formato LatLng(lat, lng)', life: 4000 });
+      loading.value = false
+      return;
+    }
+    if (!departureTime.value) {
+      toast.add({ severity: 'warn', summary: 'Attenzione', detail: 'Inserisci l\'orario di partenza', life: 3000 });
+      loading.value = false
+      return;
+    }
     const data = {
       departure: departure.value,
       arrival: arrival.value,
       departureTime: departureTime.value
     }
     bestPath.value = await RouteService.getNavigationRoute(data)
-    console.log(bestPath.value)
+    if (!bestPath.value || !bestPath.value.legs || bestPath.value.legs.length === 0) {
+      toast.add({ severity: 'info', summary: 'Nessun percorso trovato', detail: 'Non è stato trovato alcun percorso per i dati inseriti.', life: 4000 });
+      bestPath.value = null
+      loading.value = false
+      return;
+    }
+    toast.add({ severity: 'success', summary: 'Percorso trovato', detail: 'Il percorso è stato calcolato con successo.', life: 2000 });
     emit('drawBestPath', bestPath.value)
     loading.value = false
   }
   catch (error) {
+    toast.add({ severity: 'error', summary: 'Errore', detail: 'Errore durante la ricerca del percorso.', life: 4000 });
     console.error('Error fetching route:', error)
+    bestPath.value = null
   } finally {
     loading.value = false
   }

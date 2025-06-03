@@ -17,16 +17,12 @@
             <l-marker :lat-lng="arrival.latlng" v-if="arrival.visible">
             </l-marker>
             <template v-if="props.bestPath">
-                <l-marker v-for="(leg, index) in props.bestPath.legs"
-                    :lat-lng="leg.type == 'foot' 
-                                    ? (index == 0 ? [leg.steps.coordinates[0][1], leg.steps.coordinates[0][0]] : [leg.steps.coordinates[leg.steps.coordinates.length - 1][1], leg.steps.coordinates[leg.steps.coordinates.length - 1][0]]) 
-                                    : [leg.stops[0].location.coordinates[1], leg.stops[0].location.coordinates[0]]">
-                    <l-icon>
-                        <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
-                            <div class="rounded-full flex flex-col justify-center items-center"  style="width: 20px; height: 20px; background-color: blue;">
-                                <span style="color: white;">{{ leg.type == 'bus' ? leg.line.name : '' }}</span>
-                            </div>
-                        </l-icon>
+                <l-marker v-for="mark in markStops(props.bestPath)"
+                    :lat-lng="[mark.coordinates[1], mark.coordinates[0]]">
+                    <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
+                        <div class="rounded-full flex flex-col justify-center items-center"  style="width: 20px; height: 20px; background-color: blue;">
+                            <span style="color: white;">{{ mark.line ? mark.line : '' }}</span>
+                        </div>
                     </l-icon>
                 </l-marker>
                 <l-polyline v-for="(leg, index) in props.bestPath.legs" :latLngs="routeSteps(leg)" :dash-array="leg.type == 'foot' ? '5, 10' : ''" color="blue">
@@ -74,6 +70,27 @@ const selectMarker = (event) => {
     popup.value.visible = false;
     marker.value.visible = false;
     markerSelected.value = '';
+}
+
+const markStops = (bestPath) => {
+    const mark = []
+    bestPath.legs.map((leg, index) => {
+        if (leg.type == 'foot'){
+            index == 0 ? mark.push({ coordinates: leg.steps.coordinates[0] }) : mark.push({coordinates: leg.steps.coordinates[leg.steps.coordinates.length - 1]})
+        }else{
+            index == bestPath.legs.length - 2 ? leg.stops.flatMap(stop => 
+                mark.push({
+                    line: leg.line.name,
+                    coordinates: stop.location.coordinates
+                })
+            ) : 
+                mark.push({
+                    line: leg.line.name,
+                    coordinates: leg.stops[0].location.coordinates
+                })
+        }
+    })
+    return mark
 }
 
 const routeSteps = (leg) => {
