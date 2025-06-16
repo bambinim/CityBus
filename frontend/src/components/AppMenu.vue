@@ -12,8 +12,8 @@ const router = useRouter();
 
 const menuBarItems = computed(() => {
     const items = [
-        {label: 'Cerca percorso', icon: faCompass},
-        {label: 'Partenze', icon: faClock},
+        {label: 'Cerca percorso', icon: faCompass, command: () => router.push('/')},
+        {label: 'Partenze', icon: faClock, command: () => router.push('/departures')},
         {label: 'Cerca linea', icon: faBus}
     ]
     if (userStore.role == 'admin') {

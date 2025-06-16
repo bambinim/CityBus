@@ -151,7 +151,7 @@ exports.createNewLine = async (req, res) => {
         await session.withTransaction(async () => {
             const { name, directions } = req.body;
             if (!name || directions.length === 0) {
-                return res.status(400).json({ message: "Name and at least one direction are required." });
+                throw new Error("Name and at least one direction are required.");
             }
 
             const processedDirections = await processDirections({ session, directions })
@@ -170,6 +170,9 @@ exports.createNewLine = async (req, res) => {
             message: "Bus line created successfully",
         });
     } catch (error) {
+        if (error.message === "Name and at least one direction are required.") {
+            return res.status(400).json({ message: error.message });
+        }
         console.error("Failed to create a new bus line:", error);
         res.status(500).json({ message: "Error creating a new bus line", error: error.message });
     } finally {
@@ -223,13 +226,18 @@ exports.getBusLinesDetailed = async (req, res) => {
 
 exports.deleteBusLine = async (req, res) => {
     const busLineId = req.params.id
+
+    if (!mongoose.Types.ObjectId.isValid(busLineId)) {
+        return res.status(404).json({ message: "Bus line not found" });
+    }
+
     const session = await mongoose.startSession()
     try{
         await session.withTransaction(async () => {
             const busLine = await BusLine.findById(busLineId)
 
             if(!busLine){
-                return res.status(404).json({ message: 'Bus line not found' });
+                throw new Error("Bus Line not found");
             }
 
             await removeOldLineData({ session, line: busLine })
@@ -240,6 +248,9 @@ exports.deleteBusLine = async (req, res) => {
             });
         })
     }catch(error){
+        if (error.message === "Bus Line not found") {
+            return res.status(404).json({ message: error.message });
+        }
         res.status(500).send({message: 'Internal Server Error'})
         Logger.error(error)
     } finally {
@@ -250,11 +261,15 @@ exports.deleteBusLine = async (req, res) => {
 exports.getCompleteBusLinesInfo = async (req, res) => {
     const busLineId = req.params.id
 
+    if (!mongoose.Types.ObjectId.isValid(busLineId)) {
+        return res.status(404).json({ message: "Bus line not found" });
+    }
+
     try{
         const busLine = await BusLine.findById(busLineId).populate('directions.stops.routeToNext')
 
         if(!busLine){
-            return res.status(404).json({ message: 'Bus line not found' });
+            throw new Error("Bus Line not found");
         }
 
         const directionsProcessed = await Promise.all(busLine.directions.map(async direction => {
@@ -286,6 +301,9 @@ exports.getCompleteBusLinesInfo = async (req, res) => {
         }
         res.status(200).json(data)
     }catch(error){
+        if (error.message === "Bus Line not found") {
+            return res.status(404).json({ message: error.message });
+        }
         Logger.error(`/lines/{lineId/complete error: ${error}`)
         res.status(500).send({message: 'Internal Server Error'})
     }
@@ -294,6 +312,11 @@ exports.getCompleteBusLinesInfo = async (req, res) => {
 exports.editBusLine = async (req, res) => {
     const busLineId = req.params.id
     const { name, directions } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(busLineId)) {
+        return res.status(404).json({ message: "Bus line not found" });
+    }
+
     if (!name || directions.length === 0) {
         return res.status(400).json({ message: "Name and at least one direction are required." });
     }
@@ -301,6 +324,10 @@ exports.editBusLine = async (req, res) => {
     try {
         await session.withTransaction(async () => {
             const originalLine = await BusLine.findById(busLineId)
+
+            if(!originalLine){
+                throw new Error("Bus Line not found");
+            }
 
             await removeOldLineData({ session, line: originalLine })
 
@@ -312,10 +339,13 @@ exports.editBusLine = async (req, res) => {
             await updateLinesCollateralCollections({ session, busLine: updatedBusLine })
         })
 
-        res.status(201).json({
+        res.status(200).json({
             message: "Bus line modified successfully",
         });
     } catch (error) {
+        if (error.message === "Bus Line not found") {
+            return res.status(404).json({ message: error.message });
+        }
         Logger.error("Failed to modify  bus line:", error);
         res.status(500).json({ message: "Error modify bus line", error: error.message });
     } finally {
