@@ -1,62 +1,62 @@
 <template>
   <Toast />
   <AppMenu />
-  <div class="grow h-full w-full p-4 grid grid-cols-5">
-    <div class="col-span-2">
-      <div class="grow w-full p-4 grid grid-rows-4">
-          <div class="row-span-1 grow w-full h-full grid grid-rows-3 grid-cols-2 gap-4 justify-items-center">
-            <InputText class="mb-2 col-span-2" v-model="departure" type="text" size="large" :invalid="!departure" placeholder="Partenza"/>
-            <InputText class="mb-2 col-span-2" v-model="arrival" type="text" size="large" :invalid="!arrival" placeholder="Arrivo"/>
-            <InputText type="time" v-model="departureTime" class="col-span-1"/>
-            <Button type="button" label="Search" icon="pi pi-search" :loading="loading" @click="getPath" />
-          </div>
-          <div class="row-span-3 grow w-full h-full mt-4" v-if="bestPath">
-            <Timeline :value="bestPath.legs" align="alternate" class="customized-timeline">
-                    <template #marker="slotProps">
-                      <div :style="{ backgroundColor: slotProps.index == bestPath.legs.length - 1 ? 'red' : (slotProps.item.type == 'bus' ? 'dodgerblue' : 'orange') }" class="rounded-full">
-                        <font-awesome-icon class="fa-2xl p-2" :icon="slotProps.index == bestPath.legs.length - 1 ? faBullseye : (slotProps.item.type == 'bus' ? faBus : faPersonWalking)" style="color: white;"/>
-                      </div>
-                    </template>
-                    <template #content="slotProps">
-                    <Card class="mt-4">
-                        <template #title>
-                            {{ slotProps.item.type == 'bus' ? slotProps.item.stops[0].name : (slotProps.index == 0 ? 'La tua posizione' : bestPath.legs[bestPath.legs.length - 2].stops[1].name) }}
-                        </template>
-                        <template #subtitle>
-                          <div class="w-full grid grid-cols-3">
-                              <div v-if="slotProps.item.type == 'bus'" class="col-span-2 grid grid-cols-2">
-                                <span class="rounded-lg text-white text-center bg-blue-500 mr-2 col-span-1">{{ slotProps.item.line.name }}</span>
-                                <span class="col-span-1 font-bold text-xl justify-self-start">{{ slotProps.item.line.direction.name }}</span>
-                              </div>
-                              <div v-else class="col-span-2">
-                                <span class="justify-self-start text-lg col-span-2">Orario di partenza</span>
-                              </div>
-                              <span class="col-span-1 font-bold text-2xl justify-self-end">{{ getTimeFromTimestamp(slotProps.item.departureTimestamp) }}</span>
+  <div class="grow h-full w-full p-4 grid md:grid-cols-5 md:grid-rows-1 grid-cols-1 grid-rows-2">
+    <div class="md:col-span-2 row-span-1">
+      <div class="grow w-full p-4 grid grid-rows-4 h-full">
+        <div class="row-span-1 grow w-full h-full grid grid-rows-3 grid-cols-2 gap-4 justify-items-center">
+          <InputText class="mb-2 col-span-2" v-model="departure" type="text" size="large" :invalid="!departure" placeholder="Partenza"/>
+          <InputText class="mb-2 col-span-2" v-model="arrival" type="text" size="large" :invalid="!arrival" placeholder="Arrivo"/>
+          <InputText type="time" v-model="departureTime" class="col-span-1"/>
+          <Button type="button" label="Search" icon="pi pi-search" :loading="loading" @click="getPath" />
+        </div>
+        <div class="row-span-3 grow w-full h-full mt-4 overflow-y-auto pr-2 pb-2" v-if="bestPath">
+          <Timeline :value="bestPath.legs" align="alternate" class="customized-timeline">
+                  <template #marker="slotProps">
+                    <div :style="{ backgroundColor: slotProps.index == bestPath.legs.length - 1 ? 'red' : (slotProps.item.type == 'bus' ? 'dodgerblue' : 'orange') }" class="rounded-full">
+                      <font-awesome-icon class="md:fa-2xl fa-md p-2" :icon="slotProps.index == bestPath.legs.length - 1 ? faBullseye : (slotProps.item.type == 'bus' ? faBus : faPersonWalking)" style="color: white;"/>
+                    </div>
+                  </template>
+                  <template #content="slotProps">
+                  <Card class="mt-4">
+                      <template #title>
+                          {{ slotProps.item.type == 'bus' ? slotProps.item.stops[0].name : (slotProps.index == 0 ? 'La tua posizione' : bestPath.legs[bestPath.legs.length - 2].stops[1].name) }}
+                      </template>
+                      <template #subtitle>
+                        <div class="w-full grid md:grid-cols-3 md:grid-rows-1 grid-cols-2 grid-rows-2">
+                            <div v-if="slotProps.item.type == 'bus'" class="col-span-2 row-span-1 grid grid-cols-2">
+                              <span class="rounded-lg text-white text-center bg-blue-500 mr-2 col-span-1">{{ slotProps.item.line.name }}</span>
+                              <span class="col-span-1 font-bold md:text-xl text-md justify-self-start">{{ slotProps.item.line.direction.name }}</span>
+                            </div>
+                            <div v-else class="col-span-2">
+                              <span class="justify-self-start md:text-lg text-sm col-span-2">Orario di partenza</span>
+                            </div>
+                            <span class="col-span-1 row-span-1 font-bold md:text-2xl text-lg justify-self-end">{{ getTimeFromTimestamp(slotProps.item.departureTimestamp) }}</span>
+                        </div>
+                      </template>
+                      <template #content>
+                          <div v-if="slotProps.item.type == 'bus'">
+                            <p>Prossima fermata: <span class="font-bold">{{ slotProps.item.stops[1].name }}</span></p>
+                            <p>Arrivo previsto alla prossima fermata: <span class="font-bold md:text-lg text-sm">{{ getTimeFromTimestamp(slotProps.item.arrivalTimestamp) }}</span></p>
                           </div>
-                        </template>
-                        <template #content>
-                            <div v-if="slotProps.item.type == 'bus'">
-                              <p>Prossima fermata: <span class="font-bold">{{ slotProps.item.stops[1].name }}</span></p>
-                              <p>Arrivo previsto alla prossima fermata: <span class="font-bold text-lg">{{ getTimeFromTimestamp(slotProps.item.arrivalTimestamp) }}</span></p>
+                          <div v-else>
+                            <div v-if="slotProps.index == 0">
+                              <p>Prossima fermata: <span class="font-bold">{{ bestPath.legs[1].stops[0].name}}</span></p>
+                              <p>Arrivo previsto alla prossima fermata: <span class="font-bold md:text-lg text-sm">{{ getTimeFromTimestamp(slotProps.item.arrivalTimestamp) }}</span></p>
                             </div>
                             <div v-else>
-                              <div v-if="slotProps.index == 0">
-                                <p>Prossima fermata: <span class="font-bold">{{ bestPath.legs[1].stops[0].name}}</span></p>
-                                <p>Arrivo previsto alla prossima fermata: <span class="font-bold text-lg">{{ getTimeFromTimestamp(slotProps.item.arrivalTimestamp) }}</span></p>
-                              </div>
-                              <div v-else>
-                                <p>Prossima fermata: <span class="font-bold">Destinazione</span></p>
-                                <p>Arrivo previsto a destinazione: <span class="font-bold text-lg">{{ getTimeFromTimestamp(slotProps.item.arrivalTimestamp) }}</span></p>
-                              </div>
+                              <p>Prossima fermata: <span class="font-bold">Destinazione</span></p>
+                              <p>Arrivo previsto a destinazione: <span class="font-bold md:text-lg text-sm">{{ getTimeFromTimestamp(slotProps.item.arrivalTimestamp) }}</span></p>
                             </div>
-                        </template>
-                    </Card>
-                </template>
-            </Timeline>
-          </div>
+                          </div>
+                      </template>
+                  </Card>
+              </template>
+          </Timeline>
+        </div>
       </div>
     </div>
-    <div class="col-span-3">
+    <div class="md:col-span-3 row-span-1 p-4">
       <NavigationMap :bestPath="bestPath" @update:departure="updateDeparture" @update:arrival="updateArrival"/>
     </div>
   </div>
@@ -117,6 +117,7 @@ async function getPath() {
     }
     toast.add({ severity: 'success', summary: 'Percorso trovato', detail: 'Il percorso è stato calcolato con successo.', life: 2000 });
     emit('drawBestPath', bestPath.value)
+    console.log('Best path:', bestPath.value)
     loading.value = false
   }
   catch (error) {
