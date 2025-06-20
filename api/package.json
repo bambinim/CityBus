@@ -1,7 +1,6 @@
 {
   "scripts": {
-    "dev": "nodemon app.js",
-    "test": "jest"
+    "dev": "nodemon app.js"
   },
   "type": "commonjs",
   "dependencies": {
@@ -22,8 +21,6 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
-    "jest": "^30.0.0",
-    "supertest": "^7.1.1",
     "swagger-ui-express": "^5.0.1",
     "yaml": "^2.7.0"
   }

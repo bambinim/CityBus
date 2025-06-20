@@ -4,11 +4,17 @@ const {RenewToken} = require('../database')
 const jwt = require('jsonwebtoken')
 const { Logger } = require("../logging");
 const config = require('../config');
-const {verifyPassword} = require("../middleware/security");
+const {verifyPassword, hashPassword} = require("../middleware/security");
 
 
 exports.authenticateUser = async (req, res) => {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+        Logger.error("Login failed: Missing email or password");
+        res.status(401).send({message: "Login failed: Missing email or password"});
+        return;
+    }
 
     try {
         const user = await User.findOne({ email});
@@ -18,7 +24,9 @@ exports.authenticateUser = async (req, res) => {
             return;
         }
 
-        if(!verifyPassword(password, user.password)){
+        const isPasswordCorrect = await verifyPassword(password, user.password);
+
+        if(!isPasswordCorrect) {
             Logger.error("Login failed: Password not correct");
             res.status(401).send({message: "Login failed: Password not correct"});
             return;
@@ -99,15 +107,13 @@ exports.renewSession = async (req, res) => {
 };
 
 exports.deleteSession = async (req, res) => {
+     if (!req.userId) {
+        return res.status(401).send({ message: "User not authenticated" });
+    }
     try {
-        const result = await RenewToken.deleteOne({ userId: req.userId });
-        if (result.deletedCount === 0) {
-            return res.status(500).send({ message: "Internal Server Error" });
-        }
-
+        await RenewToken.deleteOne({ userId: req.userId });
         res.status(200).send("Session deleted");
     } catch (error) {
-        console.error("Error deleting session:", error);
         res.status(500).send({ message: "Internal Server Error" });
     }
 }

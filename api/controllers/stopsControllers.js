@@ -3,7 +3,7 @@ const {BusStop} = require('../database')
 const {BusLine} = require('../database')
 const {BusRide} = require('../database')
 const { RideDataProvider } = require("../lib/RedisRide")
-
+const mongoose = require('mongoose');
 
 
 exports.getBusStops = async (req, res) => {
@@ -11,6 +11,13 @@ exports.getBusStops = async (req, res) => {
     const query = {}
     if(near){
         const coordinates = near.split(',').map(Number)
+        if(coordinates.length !== 2 || isNaN(coordinates[0]) || isNaN(coordinates[1])){
+            return res.status(400).json({ message: 'Invalid coordinates format. Use "longitude,latitude".' });
+        }
+        if(coordinates[0] < -180 || coordinates[0] > 180 || coordinates[1] < -90 || coordinates[1] > 90){
+            return res.status(400).json({ message: 'Coordinates out of bounds. Longitude must be between -180 and 180, latitude between -90 and 90.' });
+        }
+
         query.location = {
             $near: {
                 $geometry: {
@@ -33,7 +40,7 @@ exports.getBusStops = async (req, res) => {
             name: stop.name,
             location: stop.location
         }));
-        res.json(response)
+        res.status(200).json(response)
     }catch (error) {
         console.error('Error fetching bus stops:', error);
         res.status(500).json({ message: 'Error processing your request' });
@@ -42,6 +49,10 @@ exports.getBusStops = async (req, res) => {
 
 exports.getBusStopInformation = async (req,res) => {
     const busStopId = req.params.id
+
+    if (!mongoose.Types.ObjectId.isValid(busStopId)) {
+            return res.status(404).json({ message: "Bus stop not found" });
+    }
 
     try{
         const busStop = await BusStop.findById(busStopId)

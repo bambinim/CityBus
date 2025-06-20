@@ -79,8 +79,4 @@ if (config.NODE_ENV == "development") {
     runDevelopmentServer();
 }
 
-if (config.NODE_ENV == "test") {
-    routerSetup();
-}
-
 module.exports = app;
