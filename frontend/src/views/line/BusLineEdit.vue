@@ -110,7 +110,7 @@ const saveBusLine = async () => {
             toast.add({severity: 'success', summary: 'Creazione linea completata. Verrai reindirizzato automaticamente', life: 3000 });
         }
         setTimeout(() => {
-            router.push({ path: '/home' })
+            router.push({ path: '/lines/view' })
         }, 3000);
     } catch (err) {
         toast.add({severity: 'error', summary: err, life: 3000 })

@@ -2,10 +2,24 @@
 function getTimeFromTimestamp(timeInput, delay = null) {
     const date = new Date(timeInput);
 
+    date.setMinutes(date.getMinutes());
+
+    const time = getTimeFormatted(date, delay);
+    return time;
+}
+
+function getTimeFromTimestampWithOffset(timeInput) {
+    const date = new Date(timeInput);
+
     const offsetMinutes = date.getTimezoneOffset();
 
     date.setMinutes(date.getMinutes() + offsetMinutes);
 
+    const time = getTimeFormatted(date);
+    return time;
+}
+
+function getTimeFormatted(date, delay = null) {
     let hour = date.getHours();
     let minute = date.getMinutes();
 
@@ -17,8 +31,7 @@ function getTimeFromTimestamp(timeInput, delay = null) {
             minute = minute % 60;
         }
     }
-    const time = (hour < 10 ? "0" + hour : hour) + ":" + (minute < 10 ? "0" + minute : minute);
-    return time;
+    return (hour < 10 ? "0" + hour : hour) + ":" + (minute < 10 ? "0" + minute : minute);
 }
 
 function getTimeStampFromTime(timeInput) {
@@ -41,4 +54,4 @@ function getTimeDifference(time1, time2) {
     return secondsDifference
 }
 
-export {getTimeFromTimestamp, getTimeStampFromTime, getTimeDifference}
+export {getTimeFromTimestamp, getTimeStampFromTime, getTimeFromTimestampWithOffset, getTimeDifference}

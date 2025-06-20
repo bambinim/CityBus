@@ -6,8 +6,8 @@
                 <div class="flex flex-wrap gap-2 items-center justify-between">
                     <h4 class="m-0">Gestione linee</h4>
                     <div>
-                        <Button label="New" icon="pi pi-plus" class="mr-2" @click="openNew" />
-                        <Button label="Delete" icon="pi pi-trash" severity="danger" outlined @click="confirmDeleteSelected" :disabled="!selectedLines" />               
+                        <Button label="Nuova linea" icon="pi pi-plus" class="mr-2" @click="openNew" />
+                        <Button label="Elimina" icon="pi pi-trash" severity="danger" outlined @click="confirmDeleteSelected" :disabled="!selectedLines" />               
                     </div>
                 </div>
             </template>

@@ -78,5 +78,3 @@ async function runDevelopmentServer() {
 if (config.NODE_ENV == "development") {
     runDevelopmentServer();
 }
-
-module.exports = app;
