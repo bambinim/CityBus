@@ -41,7 +41,7 @@ class BusRideManager{
                             directionId: direction._id,
                             scheduledDepartureTimestamp: { $eq: scheduledDeparture }
                         }).exec();
-                        if(ride){
+                        if(ride && ride.status == 'running'){
                             const allStopPassed = ride.stops.every(stop => stop.isBusPassed)
                             const agent = this.agents.find(ag => ag.ride._id.toString() == ride._id.toString())
                             if(allStopPassed){

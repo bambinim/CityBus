@@ -87,6 +87,11 @@ const onFormSubmit = ({ valid, values }) => {
                             <InputText class="w-full" id="passwordConfirm" name="passwordConfirm" type="password" placeholder="Conferma Password"/>
                             <Message v-if="$form.passwordConfirm?.invalid" severity="error" size="small" variant="simple">{{ $form.passwordConfirm.error?.message }}</Message>
                         </div>
+
+                        <div>
+                            <span>Hai già un account?</span>
+                            <RouterLink class="ml-2 p-button p-component p-button-link" to="/login">Accedi</RouterLink>
+                        </div>
                         <Button label="Registrati" type="submit" class="w-full" />
                     </Form>
                 </div>

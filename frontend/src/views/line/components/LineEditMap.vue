@@ -104,9 +104,9 @@ const nominatimSearch = async (event) => {
 }
 
 const autoCompleteValueSelected = (event) => {
-    center.value = [searchValue.value.lat, searchValue.value.lon]
+    center.value = [searchValue.value.lat, searchValue.value.lng]
     marker.value.visible = true
-    marker.value.latlng = {lat: searchValue.value.lat, lng: searchValue.value.lon}
+    marker.value.latlng = {lat: searchValue.value.lat, lng: searchValue.value.lng}
     popup.value.visible = true
 }
 

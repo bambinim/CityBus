@@ -7,7 +7,23 @@
                     <h4 class="m-0">Gestione linee</h4>
                     <div>
                         <Button label="Nuova linea" icon="pi pi-plus" class="mr-2" @click="openNew" />
-                        <Button label="Elimina" icon="pi pi-trash" severity="danger" outlined @click="confirmDeleteSelected" :disabled="!selectedLines" />               
+                        <Button label="Elimina" icon="pi pi-trash" severity="danger" outlined @click="confirmDelete = true" :disabled="selectedLines.length == 0 " />
+                        <Dialog 
+                            v-model:visible="confirmDelete" 
+                            header="Conferma eliminazione" 
+                            modal
+                            :style="{ width: '350px' }"
+                        >
+                            <p>Sei sicuro di voler eliminare le linee selezionate?</p>
+                            <template #footer>
+                                <Button label="Annulla" @click="confirmDelete = false" />
+                                <Button 
+                                label="Conferma" 
+                                severity="danger" 
+                                @click="handleDelete"
+                            />
+                            </template>
+                        </Dialog>               
                     </div>
                 </div>
             </template>
@@ -46,21 +62,30 @@ import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast';
 import { faPlus, faTrash, faPencil } from '@fortawesome/free-solid-svg-icons'
 
+const confirmDelete = ref(false);
+
 const lines = ref(null)
-const selectedLines = ref()
+const selectedLines = ref([])
 const router = useRouter();
 
 onMounted(async () => {
     lines.value = await BusLineService.getBusLinesDetailedInformation()
 })
 
-const confirmDeleteSelected = () => {
-    selectedLines.value.map(async line => {
-        await BusLineService.deleteBusLine(line.line_id)
-    })
-    lines.value = lines.value.filter(line => !selectedLines.value.includes(line) )
-    toast.add({severity: 'success', summary: 'Linea eliminata con successo', life: 3000 });
-    selectedLines.value = null
+const handleDelete = () => {
+    try {
+        selectedLines.value.map(async line => {
+            await BusLineService.deleteBusLine(line.line_id)
+        })
+        toast.add({ severity: 'success', summary: 'Linee eliminate con successo', life: 3000 });
+    } catch (err) {
+        toast.add({ severity: 'error', summary: 'Errore durante l\'eliminazione', life: 3000 });
+    } finally {
+        confirmDelete.value = false;
+        lines.value = lines.value.filter(line => !selectedLines.value.includes(line) )
+        selectedLines.value = [];
+    }
+
 }
 
 const confirmDeleteLine = async (line) => {

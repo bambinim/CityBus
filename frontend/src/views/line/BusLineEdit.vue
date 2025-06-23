@@ -12,7 +12,7 @@
                 <StepPanel :value="1">
                     <EditLineStepOne v-model="busLine" />
                     <div class="flex flex-row justify-end">
-                        <Button label="Avanti" icon="pi pi-arrow-right" iconPos="right" @click="currentStep++" />
+                        <Button label="Avanti" icon="pi pi-arrow-right" iconPos="right" @click="handleGoToStepTwo" />
                     </div>
                 </StepPanel>
                 <StepPanel :value="2" class="flex flex-col grow">
@@ -20,7 +20,7 @@
                     <EditLineStepTwo v-if="currentStep == 2" v-model="busLine" class="grow" />
                     <div class="flex justify-between">
                         <Button label="Indietro" severity="secondary" icon="pi pi-arrow-left" @click="currentStep = 1" />
-                        <Button label="Avanti" icon="pi pi-arrow-right" iconPos="right" @click="currentStep = 3" />
+                        <Button label="Avanti" icon="pi pi-arrow-right" iconPos="right" @click="handleGoToStepThree" />
                     </div>
                 </StepPanel>
                 <StepPanel :value="3">
@@ -64,11 +64,39 @@ onMounted(async () => {
   }
 });
 
+const handleGoToStepTwo = () => {
+    if (busLine.value.name.trim() === '') {
+        toast.add({severity: 'error', summary: 'Il nome della linea non può essere vuoto', life: 3000 });
+        return;
+    }
+    if (busLine.value.directions.length === 0) {
+        toast.add({severity: 'error', summary: 'Devi aggiungere almeno una direzione alla linea', life: 3000 });
+        return;
+    }
+    currentStep.value = 2;
+}
+
+const handleGoToStepThree = () => {
+    if(busLine.value.directions.some(dir => dir.stops.length < 2)){
+        toast.add({severity: 'error', summary: 'Devi aggiungere almeno due fermate per ogni direzione', life: 3000 });
+        return;
+    }
+    if(busLine.value.directions.some(dir => dir.routeLegs.length === 0)){
+        toast.add({severity: 'error', summary: 'Devi generare il percorso per ogni direzione', life: 3000 });
+        return;
+    }
+    currentStep.value = 3;
+}
+
 const loadLineData = async (id) => {
     busLine.value = await BusLineService.getBusLineToEdit(id)
 }
 
 const saveBusLine = async () => {
+    if(busLine.value.directions.some(dir => dir.timetable.length === 0)){
+        toast.add({severity: 'error', summary: 'Devi aggiungere almeno un orario per ogni direzione', life: 3000 });
+        return;
+    }
     const data = {
         name: busLine.value.name,
         directions: busLine.value.directions.map(dir => {

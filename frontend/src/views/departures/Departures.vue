@@ -63,14 +63,14 @@
                     <span class="col-span-2" :class="ride.minutesLate > 0 ? 'text-orange-500' : 'text-green-500'">{{ ride.minutesLate > 0 ? 'Ritardo: ' + ride.minutesLate + ' minuti' : 'In orario' }}</span>
                 </div>
                 <div class="p-4 flex gap-x-8">
-                    <span class="flex-none">{{ ride.rideInfo.stops.filter(stop => stop.stopId == ride.stopPassed[ride.stopPassed.length - 1])[0]?.name }}</span>
+                    <span class="flex-none">{{ lastStop?.name }}</span>
                     <ProgressBar 
                         :showValue="false"
                         :value="100 * (1 - (ride.timeToNextStop / getTimeDifference(
-                                                            ride.rideInfo.stops.filter(stop => stop.stopId == ride.nextStop)[0]?.expectedArrivalTimestamp,
-                                                            ride.rideInfo.stops.filter(stop => stop.stopId == ride.stopPassed[ride.stopPassed.length - 1])[0]?.expectedArrivalTimestamp)))" 
+                                                            nextStop?.expectedArrivalTimestamp,
+                                                            lastStop?.expectedArrivalTimestamp)))" 
                         class="grow mt-1"></ProgressBar>
-                    <span class="flex-none">{{ ride.rideInfo.stops.filter(stop => stop.stopId == ride.nextStop)[0]?.name }}</span>
+                    <span class="flex-none">{{ nextStop?.name }}</span>
                 </div>
                 <div class="mt-4 left-0">
                     <Timeline :value="ride.rideInfo.stops" align="alternate">
@@ -117,9 +117,21 @@ const simulator = ref(new BusSimulator())
 
 
 const toast = useToast();
+let interval
+
+const lastStop = computed(() => {
+    if (ride.value.stopPassed.length === 0) return undefined;
+    return ride.value.rideInfo.stops.filter(stop => stop.stopId == ride.value.stopPassed[ride.value.stopPassed.length - 1])[0]
+});
+
+const nextStop = computed(() => {
+    if (ride.value.nextStop === undefined) return undefined;
+    return ride.value.rideInfo.stops.filter(stop => stop.stopId == ride.value.nextStop)[0]
+});
 
 const loadOptions = async (event) => {
     try {
+        selectedStop.value = undefined
         stopOptions.value = await BusStopService.searchBusStops({search: event.query})
     } catch (err) {
         toast.add({severity: 'error', summary: err, life: 3000 })
@@ -132,6 +144,11 @@ const viewDepartures = async () => {
         return
     }
 
+    if (!selectedStop.value) {
+        toast.add({severity: 'warn', summary: 'Seleziona una fermata', life: 3000 });
+        return
+    }
+
     const departureTimestamp = getTimeStampFromTime(dataPicker.value)
 
     departures.value = await BusStopService.getDepartures({stopId: selectedStop.value.stopId, departureTimestamp: departureTimestamp})
@@ -139,7 +156,14 @@ const viewDepartures = async () => {
 
     lastStopSelected.value = selectedStop.value
 
-    setInterval(async () => {
+    if (departures.value.length === 0) {
+        toast.add({severity: 'info', summary: 'La fermata selezionata non ha corse attive', life: 3000 });
+        return
+    }
+
+    clearInterval(interval)
+
+    interval = setInterval(async () => {
         departures.value = await BusStopService.getDepartures({stopId: lastStopSelected.value.stopId, departureTimestamp: departureTimestamp})
         departures.value.sort((dep1, dep2) => dep1.scheduledArrivalTimestamp - dep2.scheduledArrivalTimestamp)
     }, 10000)

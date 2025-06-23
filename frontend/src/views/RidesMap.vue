@@ -170,7 +170,7 @@ watch(ridesPositions, (newRidesPosition) => {
     <AppMenu />
     <div class="grid grid-cols-12 absolute bottom-0 w-full" style="top: 50px">
         <div class="col-span-6 md:col-span-9">
-            <l-map ref="map" @mousedown="rideToFollow = null, cardInfo = {}" v-model:zoom="mapZoom" :center="mapCenter" :useGlobalLeaflet="false" :options="{zoomControl: false}" :zoomAnimation="true" :markerZoomAnimation="true">
+            <l-map ref="map" v-model:zoom="mapZoom" :center="mapCenter" :useGlobalLeaflet="false" :options="{zoomControl: false}" :zoomAnimation="true" :markerZoomAnimation="true">
                 <l-control-zoom position="bottomright"></l-control-zoom>
                 <l-tile-layer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -208,13 +208,23 @@ watch(ridesPositions, (newRidesPosition) => {
                                     Ritardo: <span class="font-semibold" :class="cardInfo.delay > 0 ? 'text-red-500' : 'text-green-500'">{{cardInfo.delay}}</span>
                                 </div>
                             </div>
+                            <Button 
+                                class="mt-2 w-full"
+                                severity="info"
+                                icon="pi pi-times"
+                                label="Interrompi monitoraggio"
+                                @click="rideToFollow = null; cardInfo = {}"
+                            />
                         </template>
                     </Card>
                 </div>
             </l-map>
         </div>
         <div class="col-span-6 md:col-span-3 flex flex-col items-center">
-            <h2 class="text-xl mt-3">Corse Attive</h2>
+            <h2 class="text-xl mt-3">
+                Corse Attive
+                <i class="pi pi-question-circle text-gray-400" v-tooltip.bottom="'Qui puoi monitorare in tempo reale le corse dei bus. Clicca sull’icona del bus per seguire la corsa sulla mappa.'"></i>
+            </h2>
             <SelectButton v-model="selectButtonValue" :options="selectButtonOptions" optionLabel="name" class="mt-2" />
             <div class="text-right w-full mt-2 flex flex-row content-center justify-between">
                 <div>

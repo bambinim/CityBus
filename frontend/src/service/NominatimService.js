@@ -21,10 +21,11 @@ export const NominatimService = {
                 name: el.name,
                 displayName: el.display_name,
                 lat: el.lat,
-                lon: el.lon
+                lng: el.lon
             }})
         } catch (err) {
             throw err
         }
     }
+
 }
