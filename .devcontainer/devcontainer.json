@@ -17,5 +17,5 @@
 			]
 		}
 	},
-	"postCreateCommand": "npm install --prefix ${containerWorkspaceFolder}/api"
+	"postCreateCommand": "/code/.devcontainer/init.sh ${containerWorkspaceFolder}"
 }

@@ -1,0 +1,36 @@
+services:
+
+  frontend:
+    build:
+      dockerfile: Dockerfile.frontend
+    ports:
+      - 8080:80
+
+  api:
+    build:
+      dockerfile: Dockerfile.api
+    environment:
+      MONGODB_URL: mongodb://root:password@mongo:27017/citybus?authSource=admin&directConnection=true
+      LOGGING_LEVEL: INFO
+      REDIS_URL: redis://redis:6379
+
+  mongo:
+    image: bitnami/mongodb:8.0
+    restart: unless-stopped
+    user: 0:0
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongo:/bitnami/mongodb
+      - ./mongo-scripts/init.sh:/docker-entrypoint-initdb.d/01-init.sh
+    environment:
+      MONGODB_REPLICA_SET_MODE: primary
+      MONGODB_REPLICA_SET_NAME: rsCitybus
+      MONGODB_ADVERTISED_HOSTNAME: mongo
+      MONGODB_REPLICA_SET_KEY: k5ByQYbhd6m7HuuzSdOU9adlaTqSiMVf
+      MONGODB_ROOT_USER: root
+      MONGODB_ROOT_PASSWORD: password
+
+  redis:
+    image: redis:7.4
+    restart: unless-stopped

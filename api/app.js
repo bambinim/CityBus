@@ -70,11 +70,25 @@ async function runDevelopmentServer() {
     const apiSchema = fs.readFileSync("./api-schema.yaml", "utf-8");
     app.use("/ui", swaggerUi.serve, swaggerUi.setup(YAML.parse(apiSchema)));
     
-    server.listen(3001, () => {
-        Logger.info(`Development server listening on port ${3001}`);
+    server.listen(config.LISTEN_PORT, () => {
+        Logger.info(`Development server listening on port ${config.LISTEN_PORT}`);
+    })
+}
+
+async function runProductionServer() {
+    Logger.info("Starting API server")
+    await connectToMongo();
+    createCollections();
+    routerSetup();
+    socketsSetup();
+    busRideManager.init(io)
+    server.listen(config.LISTEN_PORT, () => {
+        Logger.info(`Production server listening on port ${config.LISTEN_PORT}`);
     })
 }
 
 if (config.NODE_ENV == "development") {
     runDevelopmentServer();
+} else if (config.NODE_ENV == "production") {
+    runProductionServer()
 }
