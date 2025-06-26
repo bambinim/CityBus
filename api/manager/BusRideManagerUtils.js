@@ -18,7 +18,7 @@ function getTimeStampFromTime(timeInput) {
 
 async function getBusPosition(ride){
     try {
-        const currentTimestamp = Date.now();
+        let currentTimestamp = Date.now();
         const nextStopIndex = ride.stops.findIndex(stop => !stop.isBusPassed);
         const previousStopIndex = nextStopIndex - 1;
         const previousStop = ride.stops[previousStopIndex];
@@ -27,7 +27,7 @@ async function getBusPosition(ride){
         const previousStopTime = previousStop.expectedArrivalTimestamp;
         const nextStopTime = nextStop.expectedArrivalTimestamp;
         if (currentTimestamp < previousStopTime) {
-            throw new Error("Current timestamp is before previous stop arrival.");
+            currentTimestamp = previousStopTime;
         }
         const elapsedTime = (currentTimestamp - previousStopTime) / 1000;
         const totalTravelTime = (nextStopTime - previousStopTime) / 1000; 

@@ -180,7 +180,7 @@ watch(ridesPositions, (newRidesPosition) => {
                 <l-marker v-for="(ride, idx) in ridesPositions"
                 :lat-lng="{lng: ride.position[0], lat: ride.position[1]}" >
                     <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
-                        <div class="rounded-full flex flex-col justify-center items-center"  style="width: 20px; height: 20px; background-color: blue;">
+                        <div class="rounded-full inline-flex justify-center items-center"  style="padding: 4px 8px; background-color: blue;">
                             <span style="color: white;">{{ ride.line }}</span>
                         </div>
                     </l-icon>

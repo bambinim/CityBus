@@ -1,7 +1,7 @@
 <template>
     <Toast />
     <AppMenu />
-    <div class="grow h-full w-full p-4 grid grid-cols-4">
+    <div class="grow h-full w-full grid grid-cols-4 pt-4 pr-4 pl-4">
         <div v-if="!simulatorView || (simulatorView && !isMobile)" class="md:col-span-2 col-span-4">
             <div class="flex flex-wrap justify-start items-end gap-4">
                 <AutoComplete
@@ -45,14 +45,14 @@
                 </template>
             </Card>
         </div>
-        <div v-if="simulatorView" class="md:col-span-2 col-span-4 grid grid-cols-2 grid-rows-2 h-full flex flex-row">
-            <div class="relative col-span-2">
+        <div v-if="simulatorView" class="md:col-span-2 col-span-4 grid grid-cols-2 grid-rows-2 h-full overflow-y-auto">
+            <div class="relative col-span-2 row-span-1 h-full">
                 <RideMap class="z-0"/>
                 <Button v-if="simulatorView && isMobile" rounded aria-label="Filter" class="absolute bottom-14 left-4 z-10" size="large" @click="handleBackButton">
                     <font-awesome-icon :icon="faArrowLeft" />
                 </Button>
             </div>
-            <div class="col-span-2 flex flex-col text-lg mt-4">
+            <div class="col-span-2 flex flex-col text-lg mt-4 row-span-1 h-full overflow-y-auto">
                 <div class="w-full grid grid-cols-4 ">
                     <div class="rounded-lg text-white bg-blue-500 mr-2 col-span-1 text-center">
                         {{ ride.rideInfo.line.name }}

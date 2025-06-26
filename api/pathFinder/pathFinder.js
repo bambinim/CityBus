@@ -2,6 +2,7 @@ const csa = require('csa');
 const { StopsConnection, BusLine } = require('../database');
 const { Readable } = require('stream');
 const { coordinatesDistance } = require('../lib/utils');
+const { default: mongoose } = require('mongoose');
 
 
 async function getNavigationPath(data) {
@@ -67,7 +68,7 @@ async function getNavigationPath(data) {
         conns.push({
           '@id': connection._id.toString(),
           travelMode: 'bus',
-          lineid: line.lineId.toString(),
+          lineId: line.lineId.toString(),
           directionId: line.directionId.toString(),
           departureStop: connection.from.toString(),
           departureTime: departureTime,
@@ -79,56 +80,49 @@ async function getNavigationPath(data) {
   }
 
   conns.sort((a, b) => a.departureTime - b.departureTime);
-
-  if (conns.length === 0) {
-      return Promise.resolve([]);
-  }
-
   return new Promise((resolve, reject) => {
     const connectionsReadStream = Readable.from(conns);
     let settled = false;
 
-    const timeout = setTimeout(() => {
-      if (!settled) {
-        settled = true;
-        console.error("Planner timeout: nessun evento emesso");
-        resolve([]);
-        connectionsReadStream.destroy();
-      }
-    }, 100);
-
     connectionsReadStream.pipe(planner);
 
-    planner.on("result", function (result) {
+    planner.on("result", function (path) {
       if (!settled) {
         settled = true;
-        clearTimeout(timeout);
-        console.log(result);
-        resolve(result);
-        connectionsReadStream.destroy();
+        resolve(path || []);
       }
     });
 
-    planner.on("error", function (error) {
+    planner.on("stop_condition", function (count) {
       if (!settled) {
+        console.error("Reached stop condition after relaxing " + count + " connections.");
         settled = true;
-        clearTimeout(timeout);
-        console.error("Planner error event:", error);
-        reject(error);
-        connectionsReadStream.destroy();
+        resolve([]);
       }
     });
 
     planner.on("end", function () {
       if (!settled) {
+        console.error("End of stream reached (no path found)");
         settled = true;
-        clearTimeout(timeout);
-        console.log("Planner end event");
         resolve([]);
-        connectionsReadStream.destroy();
       }
     });
+
+    planner.on("data", function (mstConnection) {
+      
+    });
+
+    planner.on("error", function (err) {
+      if (!settled) {
+        settled = true;
+        console.error("Errore del planner:", err);
+        reject(err);
+      }
+    });
+
   })
+  
 }
 
 function getArrivalTime(departureCoords, arrivalCoords, departureTime){

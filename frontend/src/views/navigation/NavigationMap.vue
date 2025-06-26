@@ -20,7 +20,7 @@
                 <l-marker v-for="mark in markStops(props.bestPath)"
                     :lat-lng="[mark.coordinates[1], mark.coordinates[0]]">
                     <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
-                        <div class="rounded-full flex flex-col justify-center items-center"  style="width: 20px; height: 20px; background-color: blue;">
+                        <div class="rounded-full inline-flex justify-center items-center"  style="padding: 4px 8px; background-color: blue;">
                             <span style="color: white;">{{ mark.line ? mark.line : '' }}</span>
                         </div>
                     </l-icon>

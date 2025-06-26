@@ -11,7 +11,7 @@
                 :lat-lng="center"
                 :name="name">
                 <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
-                    <div class="rounded-full flex flex-col justify-center items-center"  style="width: 20px; height: 20px; background-color: blue;">
+                    <div class="rounded-full inline-flex justify-center items-center"  style="padding: 4px 8px; background-color: blue;">
                         <span style="color: white;">{{ name }}</span>
                     </div>
                 </l-icon>

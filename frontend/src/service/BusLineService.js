@@ -56,7 +56,7 @@ export const BusLineService = {
                 name: name,
                 directions: directions
             }, authenticated: true})
-            if (res.status == 201) {
+            if (res.status == 200) {
                 return;
             }
             msg = 'Si è verificato un errore durante la modifica della linea'

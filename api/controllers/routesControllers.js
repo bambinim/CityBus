@@ -90,6 +90,7 @@ exports.getNavigationRoutes = async (req, res) => {
         { $limit: 4 }
     ]);
 
+
     const paths = [];
 
     for( const departure of departureStops) {
@@ -110,6 +111,8 @@ exports.getNavigationRoutes = async (req, res) => {
         const lastB = b[b.length - 1];
         return new Date(lastA.arrivalTime) - new Date(lastB.arrivalTime);
     });
+
+    console.log(paths[0])
 
     const departureTimestamp = new Date(paths[0][0].departureTime).getTime();
     const arrivalTimestamp = new Date(paths[0][paths[0].length - 1].arrivalTime).getTime();
@@ -145,10 +148,10 @@ exports.getNavigationRoutes = async (req, res) => {
             }
         }else{
             type = 'bus'
-            const lineDir = await BusLine.findById(leg.lineid)
+            const lineDir = await BusLine.findById(leg.lineId)
             const line = lineDir.directions.filter(dir => dir._id.toString() === leg.directionId).map(dir => {
                 return {
-                    id: leg.lineid,
+                    id: leg.lineId,
                     name: lineDir.name,
                     direction: {
                         id: dir._id,
@@ -161,7 +164,7 @@ exports.getNavigationRoutes = async (req, res) => {
                     $in: [leg.departureStop, leg.arrivalStop]
                 }
             })
-
+            if (stopsInfo[0]._id == leg.arrivalStop) stopsInfo.reverse()
             const stops = await Promise.all(stopsInfo.map(async (stop, index) => {
                 const dir = lineDir.directions.find(dir => dir._id.toString() === leg.directionId);
                 const stopData = dir.stops.find(s => s.stopId.toString() === leg.departureStop);
@@ -199,6 +202,8 @@ exports.getNavigationRoutes = async (req, res) => {
         arrivalTimestamp: arrivalTimestamp,
         legs: legs
     }
+
+    json.legs.forEach(leg => console.log(leg.stops))
     
     res.json(json);
 }

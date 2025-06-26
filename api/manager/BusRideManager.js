@@ -12,22 +12,39 @@ class BusRideManager{
 
     async init(io){
         this.io = io
-        await BusRide.updateMany(
-            {
-                'status': "running", 
-                $expr: {
-                    $gte: [
-                        {
-                            $arrayElemAt:
-                                ['$stops.expectedArrivalTimestamp', -1] },
-                                new Date()
-                        
-                    ]
-                }
-            },
-            { $set: {status: 'finished'}}
-        )
+        const activeRides = await BusRide.find({ status: 'running' });
+        activeRides.forEach(async busRide => {
+            busRide = this.checkCompletedRide(busRide);
+            if (busRide.status === 'finished'){
+                await BusRide.updateOne(
+                    { _id: busRide._id },
+                    {
+                        $set: {
+                            status: 'finished',
+                            'stops.$[].isBusPassed': true
+                        }
+                    }
+                );
+            }
+        })
         this.startLoop()
+    }
+
+    checkCompletedRide(busRide) {
+        if (busRide.status !== 'running') return busRide;
+
+        const now = Date.now();
+        const lastStop = busRide.stops[busRide.stops.length - 1];
+
+        if (!lastStop) return busRide;
+
+        const lastArrival = lastStop.expectedArrivalTimestamp;
+
+        if (now > lastArrival) {
+            busRide.status = 'finished';
+        }
+
+        return busRide;
     }
 
     async startLoop(){
@@ -41,7 +58,7 @@ class BusRideManager{
                             directionId: direction._id,
                             scheduledDepartureTimestamp: { $eq: scheduledDeparture }
                         }).exec();
-                        if(ride && ride.status == 'running'){
+                        if(ride){
                             const allStopPassed = ride.stops.every(stop => stop.isBusPassed)
                             const agent = this.agents.find(ag => ag.ride._id.toString() == ride._id.toString())
                             if(allStopPassed){
