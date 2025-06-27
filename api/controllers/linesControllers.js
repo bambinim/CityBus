@@ -243,9 +243,7 @@ exports.deleteBusLine = async (req, res) => {
             await removeOldLineData({ session, line: busLine })
             await BusLine.deleteOne({_id: busLineId})
 
-            res.status(200).send({
-                message: "Resource deleted successfully",
-            });
+            res.status(200).send();
         })
     }catch(error){
         if (error.message === "Bus Line not found") {
