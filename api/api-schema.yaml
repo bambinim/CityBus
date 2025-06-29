@@ -638,6 +638,13 @@ paths:
         - busline
       security:
         - BearerAuth: []
+      parameters:
+        - in: path
+          name: busLineId
+          schema:
+            type: string
+          required: true
+          description: Id of the bus line
       responses:
         '200':
           description: "Resource deleted successfully"
@@ -656,6 +663,13 @@ paths:
         - busline
       security:
         - BearerAuth: []
+      parameters:
+        - in: path
+          name: busLineId
+          schema:
+            type: string
+          required: true
+          description: Id of the bus line
       responses:
         '200':
           description: "Complete bus line informations"
