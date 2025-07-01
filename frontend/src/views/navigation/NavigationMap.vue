@@ -16,16 +16,21 @@
             </l-marker>
             <l-marker :lat-lng="arrival.latlng" v-if="arrival.visible">
             </l-marker>
-            <template v-if="props.bestPath">
-                <l-marker v-for="mark in markStops(props.bestPath)"
+            <template v-if="props.pathFiltered">
+                <l-marker v-for="(mark, index) in markStops(props.pathFiltered)"
                     :lat-lng="[mark.coordinates[1], mark.coordinates[0]]">
                     <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
-                        <div class="rounded-full inline-flex justify-center items-center"  style="padding: 4px 8px; background-color: blue;">
-                            <span style="color: white;">{{ mark.line ? mark.line : '' }}</span>
+                        <div v-if="index == 0">
+                            <font-awesome-icon :icon="faPerson" style="width: 20px; height: 20px; color: orange;"/>
+                        </div>
+                        <div v-else-if="index == (props.pathFiltered.legs.length)">
+                            <font-awesome-icon :icon="faLocationDot"  style="width: 20px; height: 20px; color: red;"/>
+                        </div>
+                        <div v-else class="rounded-full flex flex-col justify-center items-center"  style="width: 20px; height: 20px; background-color: blue;">
                         </div>
                     </l-icon>
                 </l-marker>
-                <l-polyline v-for="(leg, index) in props.bestPath.legs" :latLngs="routeSteps(leg)" :dash-array="leg.type == 'foot' ? '5, 10' : ''" color="blue">
+                <l-polyline v-for="(leg, index) in props.pathToFollow.legs" :latLngs="routeSteps(leg)" :dash-array="leg.type == 'foot' ? '5, 10' : ''" color="blue">
                 </l-polyline>
             </template>
         </l-map>
@@ -35,6 +40,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { LMap, LTileLayer, LMarker, LPopup, LIcon, LPolyline, LControl, LControlZoom } from "@vue-leaflet/vue-leaflet";
+import { faPerson, faLocationDot } from '@fortawesome/free-solid-svg-icons'
 import { Steps } from 'primevue';
 import LineEditMap from '../line/components/LineEditMap.vue';
 
@@ -45,11 +51,11 @@ const marker = ref({ visible: false, latlng: null })
 const popup = ref({visible: false})
 const options = ref(['Partenza', 'Arrivo']);
 const markerSelected = ref('');
-const props = defineProps(['bestPath'])
+const props = defineProps(['pathToFollow', 'pathFiltered'])
 
 const emit = defineEmits(['update:departure', 'update:arrival']);
 
-watch( () => props.bestPath, (oldPath, newPath)=> {
+watch( () => props.pathToFollow, (oldPath, newPath)=> {
    reset()
 })
 
@@ -72,13 +78,13 @@ const selectMarker = (event) => {
     markerSelected.value = '';
 }
 
-const markStops = (bestPath) => {
+const markStops = (path) => {
     const mark = []
-    bestPath.legs.map((leg, index) => {
+    path.legs.map((leg, index) => {
         if (leg.type == 'foot'){
             index == 0 ? mark.push({ coordinates: leg.steps.coordinates[0] }) : mark.push({coordinates: leg.steps.coordinates[leg.steps.coordinates.length - 1]})
         }else{
-            index == bestPath.legs.length - 2 ? leg.stops.flatMap(stop => 
+            index == path.legs.length - 2 ? leg.stops.flatMap(stop => 
                 mark.push({
                     line: leg.line.name,
                     coordinates: stop.location.coordinates
@@ -102,8 +108,8 @@ const routeSteps = (leg) => {
 }
 
 const reset = () => {
-    departure.value.visible = false
-    arrival.value.visible = false
+    departure.value = { visible: false, latlng: null }
+    arrival.value = { visible: false, latlng: null }
 }
 
 

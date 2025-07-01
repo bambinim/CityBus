@@ -62,7 +62,6 @@ const onFormSubmit = ({ valid, values }) => {
                         </div>
                         <Button label="Login" class="w-full" type="submit" />
                     </Form>
-                    <RouterLink to="/forgot-password" class="ml-2 underline p-button p-component p-button-link">Hai dimenticato la password?</RouterLink>
                     <div>
                         <span>Non hai ancora un account?</span>
                         <RouterLink class="ml-2 p-button p-component p-button-link" to="/registration">Registrati</RouterLink>

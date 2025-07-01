@@ -34,50 +34,49 @@
         </div>
       </div>
 
-      <div class="w-full h-full mt-4 pr-2 pb-2" v-if="bestPath">
-        <Timeline :value="bestPath.legs" align="alternate" class="customized-timeline">
-          <template #marker="slotProps">
-            <div :style="{ backgroundColor: slotProps.index == bestPath.legs.length - 1 ? 'red' : (slotProps.item.type == 'bus' ? 'dodgerblue' : 'orange') }" class="rounded-full">
-              <font-awesome-icon class="md:fa-2xl fa-md p-2" :icon="slotProps.index == bestPath.legs.length - 1 ? faBullseye : (slotProps.item.type == 'bus' ? faBus : faPersonWalking)" style="color: white;" />
-            </div>
-          </template>
-          <template #content="slotProps">
-            <Card class="mt-4">
-              <template #title>
-                {{ slotProps.item.type == 'bus' ? slotProps.item.stops[0].name : (slotProps.index == 0 ? 'La tua posizione' : bestPath.legs[bestPath.legs.length - 2].stops[1].name) }}
-              </template>
-              <template #subtitle>
-                <div class="w-full grid grid-rows-3">
-                  <div v-if="slotProps.item.type == 'bus'" class="row-span-1">
-                    <span class="rounded-lg text-white text-center bg-blue-500 mr-2">{{ slotProps.item.line.name }}</span>
-                    <span class="font-bold md:text-xl text-md">{{ slotProps.item.line.direction.name }}</span>
+      <div class="w-full h-full mt-4 pr-2 pb-2" v-if="pathFiltered">
+        <Timeline :value="pathFiltered.legs" align="alternate" class="customized-timeline">
+            <template #marker="slotProps">
+              <div :style="{ backgroundColor: slotProps.index == pathFiltered.legs.length - 1 ? 'red' : (slotProps.item.type == 'bus' ? 'dodgerblue' : 'orange') }" class="rounded-full">
+                <font-awesome-icon class="md:fa-2xl fa-md p-2" :icon="slotProps.index == pathFiltered.legs.length - 1 ? faBullseye : (slotProps.item.type == 'bus' ? faBus : faPersonWalking)" style="color: white;" />
+              </div>
+            </template>
+            <template #content="slotProps">
+              <Card class="mt-4">
+                <template #title>
+                  {{ slotProps.item.type == 'bus' ? slotProps.item.stops[0].name : (slotProps.index == 0 ? 'La tua posizione' : pathFiltered.legs[pathFiltered.legs.length - 2].stops[1].name) }}
+                </template>
+                <template #subtitle>
+                  <div class="w-full grid grid-rows-3">
+                    <div v-if="slotProps.item.type == 'bus'" class="row-span-1">
+                      <span class="rounded-lg text-white text-center bg-blue-500 mr-2">{{ slotProps.item.line.name }}</span>
+                      <span class="font-bold md:text-xl text-md">{{ slotProps.item.line.direction.name }}</span>
+                    </div>
+                    <div class="row-span-1">
+                      <span class="md:text-lg text-sm">Orario di partenza:</span>
+                    </div>
+                    <span class="row-span-1 font-bold md:text-2xl text-lg" :class="slotProps.index % 2 === 0 ? 'justify-self-start' : 'justify-self-end'">
+                      {{ getTimeFromTimestampWithOffset(slotProps.item.departureTimestamp) }}
+                    </span>
                   </div>
-                  <div class="row-span-1">
-                    <span class="md:text-lg text-sm">Orario di partenza:</span>
+                </template>
+                <template #content>
+                  <div v-if="slotProps.item.type == 'bus'">
+                    <p>Cambio bus alla fermata: <span class="font-bold">{{ slotProps.item.stops[1].name }}</span></p>
+                    <p>Arrivo previsto alla fermata: <span class="font-bold md:text-lg text-sm">{{ getTimeFromTimestampWithOffset(slotProps.item.arrivalTimestamp) }}</span></p>
                   </div>
-                  <span class="row-span-1 font-bold md:text-2xl text-lg" :class="slotProps.index % 2 === 0 ? 'justify-self-start' : 'justify-self-end'">
-                    {{ getTimeFromTimestampWithOffset(slotProps.item.departureTimestamp) }}
-                  </span>
-                </div>
-              </template>
-              <template #content>
-                <div v-if="slotProps.item.type == 'bus'">
-                  <p>Prossima fermata: <span class="font-bold">{{ slotProps.item.stops[1].name }}</span></p>
-                  <p>Arrivo previsto alla prossima fermata: <span class="font-bold md:text-lg text-sm">{{ getTimeFromTimestampWithOffset(slotProps.item.arrivalTimestamp) }}</span></p>
-                </div>
-                <div v-else>
-                  <p>Prossima fermata: <span class="font-bold">{{ slotProps.index === 0 ? bestPath.legs[1].stops[0].name : 'Destinazione' }}</span></p>
-                  <p>Arrivo previsto: <span class="font-bold md:text-lg text-sm">{{ getTimeFromTimestampWithOffset(slotProps.item.arrivalTimestamp) }}</span></p>
-                </div>
-              </template>
-            </Card>
-          </template>
-        </Timeline>
+                  <div v-else>
+                    <p>Proseguite a piedi fino a <span class="font-bold">{{ slotProps.index === 0 ? pathFiltered.legs[1].stops[0].name : 'Destinazione' }}</span></p>
+                    <p>Arrivo previsto: <span class="font-bold md:text-lg text-sm">{{ getTimeFromTimestampWithOffset(slotProps.item.arrivalTimestamp) }}</span></p>
+                  </div>
+                </template>
+              </Card>
+            </template>
+          </Timeline>
       </div>
     </div>
-
     <div class="md:col-span-6 row-span-1 p-4 h-full">
-      <NavigationMap :bestPath="bestPath" @update:departure="updateDeparture" @update:arrival="updateArrival" />
+      <NavigationMap :pathToFollow="pathToFollow" :pathFiltered="pathFiltered" @update:departure="updateDeparture" @update:arrival="updateArrival" />
     </div>
   </div>
 </template>
@@ -100,10 +99,11 @@ const departureSuggestions = ref([])
 const arrivalSuggestions = ref([])
 const departureTime = ref('')
 const loading = ref(false)
-const bestPath = ref(null)
-const emit = defineEmits(['drawBestPath'])
+const pathToFollow = ref(null)
+const pathFiltered = ref(null)
 const detailedSuggestionsDeparture = ref([])
 const detailedSuggestionsArrival = ref([])
+const lastDirection = ref(null)
 
 async function onDepartureSearch(event) {
   detailedSuggestionsDeparture.value = await NominatimService.search(event.query)
@@ -143,11 +143,13 @@ async function getPath() {
     const path = await RouteService.getNavigationRoute(data)
     if (!path || !path.legs || path.legs.length === 0) {
       toast.add({ severity: 'info', summary: 'Nessun percorso trovato', life: 4000 })
-      bestPath.value = null
+      pathFiltered.value = null
+      pathToFollow.value = null
     } else {
-      bestPath.value = path
+      pathToFollow.value = { ...path }
+      console.log("Path: ", pathToFollow)
+      pathFiltered.value = computePath(path)
       toast.add({ severity: 'success', summary: 'Percorso trovato', life: 2000 })
-      emit('drawBestPath', path)
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Errore', detail: 'Errore durante la ricerca del percorso.', life: 4000 })
@@ -156,6 +158,75 @@ async function getPath() {
     loading.value = false
   }
 }
+
+function computePath(pathFiltered) {
+  const mergedLegs = pathFiltered.legs.reduce((acc, leg, idx, arr) => {
+    const lastMerged = acc[acc.length - 1];
+
+    if (leg.type === "foot") {
+      // Tratta a piedi: aggiungi direttamente
+      return [...acc, { ...leg }];
+    }
+
+    if (leg.type === "bus") {
+      const directionId = leg.line.direction.id;
+
+      if (
+        !lastMerged ||
+        lastMerged.type !== "bus" ||
+        lastMerged.line.direction.id !== directionId
+      ) {
+        // Nuova direzione bus: crea una nuova tratta
+        const newLeg = {
+          type: "bus",
+          departureTimestamp: leg.departureTimestamp,
+          arrivalTimestamp: leg.arrivalTimestamp,
+          line: leg.line,
+          duration: 0,
+          stops: [leg.stops[0], leg.stops[leg.stops.length - 1]],
+          routeToNext: {
+            type: "LineString",
+            coordinates: leg.stops.reduce(
+              (coords, stop) => coords.concat(stop.routeToNext.coordinates),
+              []
+            ),
+          },
+        };
+        newLeg.duration = (newLeg.arrivalTimestamp - newLeg.departureTimestamp) / 1000;
+        return [...acc, newLeg];
+      } else {
+        // Stessa direzione: aggiorna l’ultima tratta bus unita
+        const updatedLeg = {
+          ...lastMerged,
+          arrivalTimestamp: leg.arrivalTimestamp,
+          stops: [
+            lastMerged.stops[0],
+            leg.stops[leg.stops.length - 1],
+          ],
+          routeToNext: {
+            type: "LineString",
+            coordinates: lastMerged.routeToNext.coordinates.concat(
+              leg.stops.reduce(
+                (coords, stop) => coords.concat(stop.routeToNext.coordinates),
+                []
+              )
+            ),
+          },
+        };
+        updatedLeg.duration = (updatedLeg.arrivalTimestamp - updatedLeg.departureTimestamp) / 1000;
+        return [...acc.slice(0, -1), updatedLeg];
+      }
+    }
+
+    return acc; // fallback per tipi inattesi
+  }, []);
+
+  return {
+    ...pathFiltered,
+    legs: mergedLegs,
+  };
+}
+
 
 function updateDeparture(latlng) {
   departureLabel.value = latlng

@@ -21,13 +21,16 @@
             </div>
             <Card v-for="(departure, index) in departures" class="w-full sm:w-3/4 rounded-lg mt-4" :key="index" @click="selectDeparture(index)">
                 <template #title>
-                    <div  class="grid grid-cols-4">
+                    <div  class="grid grid-cols-5">
                         <div class="rounded-lg text-white bg-blue-500 mr-2 col-span-1 text-center">
                             {{ departure.name }}
                         </div>
                         <p class="col-span-3">
                             {{ departure.direction.name }}
                         </p>
+                        <div class="col-span-1 justify-end">
+                            <font-awesome-icon :icon="faMagnifyingGlass"/>
+                        </div>         
                     </div>
                 </template>
                 <template #content>
@@ -62,15 +65,15 @@
                     </p>
                     <span class="col-span-2" :class="ride.minutesLate > 0 ? 'text-orange-500' : 'text-green-500'">{{ ride.minutesLate > 0 ? 'Ritardo: ' + ride.minutesLate + ' minuti' : 'In orario' }}</span>
                 </div>
-                <div class="p-4 flex gap-x-8">
-                    <span class="flex-none">{{ lastStop?.name }}</span>
+                <div class="p-4 gap-x-8 grid grid-cols-4">
+                    <span class="col-span-1">{{ lastStop?.name }}</span>
                     <ProgressBar 
                         :showValue="false"
                         :value="100 * (1 - (ride.timeToNextStop / getTimeDifference(
                                                             nextStop?.expectedArrivalTimestamp,
                                                             lastStop?.expectedArrivalTimestamp)))" 
-                        class="grow mt-1"></ProgressBar>
-                    <span class="flex-none">{{ nextStop?.name }}</span>
+                        class="col-span-2 mt-1"></ProgressBar>
+                    <span class="col-span-1">{{ nextStop?.name }}</span>
                 </div>
                 <div class="mt-4 left-0">
                     <Timeline :value="ride.rideInfo.stops" align="alternate">
@@ -96,7 +99,7 @@
 import RideMap from './RideMap.vue';
 import { useToast } from 'primevue';
 import { BusStopService } from '@/service/BusStopService';
-import { faCircle, faBus, faArrowLeft } from '@fortawesome/free-solid-svg-icons'
+import { faCircle, faBus, faArrowLeft, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 import { ref } from 'vue';
 import { useDevice } from '@/utils/useDevice';
 import { getTimeFromTimestamp, getTimeStampFromTime, getTimeDifference } from '@/utils/DateUtils';
@@ -119,6 +122,13 @@ const simulator = ref(new BusSimulator())
 const toast = useToast();
 let interval
 
+const currentTime = computed(() => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+})
+
 const lastStop = computed(() => {
     if (ride.value.stopPassed.length === 0) return undefined;
     return ride.value.rideInfo.stops.filter(stop => stop.stopId == ride.value.stopPassed[ride.value.stopPassed.length - 1])[0]
@@ -131,7 +141,6 @@ const nextStop = computed(() => {
 
 const loadOptions = async (event) => {
     try {
-        selectedStop.value = undefined
         stopOptions.value = await BusStopService.searchBusStops({search: event.query})
     } catch (err) {
         toast.add({severity: 'error', summary: err, life: 3000 })
@@ -141,6 +150,11 @@ const loadOptions = async (event) => {
 const viewDepartures = async () => {
     if(!dataPicker.value){
         toast.add({severity: 'warn', summary: 'Inserisci un orario di partenza', life: 3000 });
+        return
+    }
+
+    if(getTimeStampFromTime(dataPicker.value) < getTimeStampFromTime(currentTime.value)){
+        toast.add({severity: 'warn', summary: 'Orario non valido: non puoi scegliere un orario già passato.', life: 3000 });
         return
     }
 

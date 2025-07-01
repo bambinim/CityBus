@@ -1,5 +1,5 @@
 import { useBusRideStore } from '@/stores/ride';
-import socketRequests from "@/lib/socketRequests";
+import { WebSocket } from '@/lib/websocket';
 
 
 export class BusSimulator {
@@ -25,7 +25,7 @@ export class BusSimulator {
                 this.reset()
             this.rideId = rideId;
             this.busRideStore.setRideInfo(this.rideId)
-            this.socket = await socketRequests.connect(`/rides/${this.rideId}/position`);
+            this.socket = new WebSocket(`/rides/${this.rideId}/position`);
 
             this.socket.on("ride_update", (data) => {
                 this.busRideStore.updateRideData(data);
