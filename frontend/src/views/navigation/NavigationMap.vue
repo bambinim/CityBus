@@ -1,6 +1,6 @@
 <template>
     <div class="h-full relative">
-        <l-map ref="map" v-model:zoom="zoom" :center="[44.136352, 12.242244]" :useGlobalLeaflet="false" @click="handleMapClick">
+        <l-map ref="map" v-model:zoom="zoom" :center="[44.136352, 12.242244]" :useGlobalLeaflet="false" @click="handleMapClick" :options="{zoomControl: false}">
             <l-control-zoom position="bottomright"></l-control-zoom>
             <l-tile-layer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
