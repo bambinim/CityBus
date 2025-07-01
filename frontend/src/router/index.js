@@ -9,6 +9,7 @@ import RidesMap from '@/views/RidesMap.vue'
 import { useUserStore } from '@/stores/user'
 import { UsersService } from '@/service/UsersService'
 import Navigation from '@/views/navigation/Navigation.vue'
+import ProfileView from '@/views/Profile.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,7 +22,8 @@ const router = createRouter({
     {path: '/line/edit/:id', component:BusLineEditView, meta: {requiresAuth: true, restrictTo: ['admin']}},
     {path: '/lines/view', component: BusLinesTableView, meta: {requiresAuth: true, restrictTo: ['admin']}},
     {path: '/departures', component: DeparturesView, meta: {requiresAuth: true}},
-    {path: '/rides-map', component: RidesMap, meta: {requiresAuth: true, restrictTo: ['admin']}}
+    {path: '/rides-map', component: RidesMap, meta: {requiresAuth: true, restrictTo: ['admin']}},
+    {path: '/profile', component: ProfileView, meta: {requiresAuth: true}}
   ],
 })
 
