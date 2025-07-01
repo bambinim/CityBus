@@ -14,7 +14,6 @@ const menuBarItems = computed(() => {
     const items = [
         {label: 'Cerca percorso', icon: faCompass, command: () => router.push('/')},
         {label: 'Partenze', icon: faClock, command: () => router.push('/departures')},
-        {label: 'Cerca linea', icon: faBus}
     ]
     if (userStore.role == 'admin') {
         items.push({label: 'Amministrazione', icon: faGear, items: [
@@ -34,7 +33,7 @@ const logoutFunction = () => {
 };
 
 const userMenuItems = ref([
-    {label: 'Profilo', icon: faUser},
+    {label: 'Profilo', icon: faUser, command: () => router.push('/profile')},
     {label: 'Logout', icon: faRightFromBracket, command: logoutFunction}
 ]);
 

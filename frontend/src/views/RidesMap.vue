@@ -210,7 +210,6 @@ watch(ridesPositions, (newRidesPosition) => {
                             </div>
                             <Button 
                                 class="mt-2 w-full"
-                                severity="info"
                                 icon="pi pi-times"
                                 label="Interrompi monitoraggio"
                                 @click="rideToFollow = null; cardInfo = {}"

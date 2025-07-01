@@ -18,8 +18,14 @@
                     v-model="dataPicker"
                     />
                 <Button label="Search" icon="pi pi-search" @click="viewDepartures()" />
+                <Button
+                    label="Stop"
+                    icon="pi pi-stop"
+                    severity="danger"
+                    @click="stopFollowingLine()"
+                />
             </div>
-            <Card v-for="(departure, index) in departures" class="w-full sm:w-3/4 rounded-lg mt-4" :key="index" @click="selectDeparture(index)">
+            <Card v-for="(departure, index) in departures" class="w-full sm:w-3/4 rounded-lg mt-4" :key="index">
                 <template #title>
                     <div  class="grid grid-cols-5">
                         <div class="rounded-lg text-white bg-blue-500 mr-2 col-span-1 text-center">
@@ -29,7 +35,7 @@
                             {{ departure.direction.name }}
                         </p>
                         <div class="col-span-1 justify-end">
-                            <font-awesome-icon :icon="faMagnifyingGlass"/>
+                            <font-awesome-icon :icon="faMagnifyingGlass" style="color: #2b7fff;" class="hover:cursor-pointer" @click="selectDeparture(index)"/>
                         </div>         
                     </div>
                 </template>
@@ -51,7 +57,7 @@
         <div v-if="simulatorView" class="md:col-span-2 col-span-4 grid grid-cols-2 grid-rows-2 h-full overflow-y-auto">
             <div class="relative col-span-2 row-span-1 h-full">
                 <RideMap class="z-0"/>
-                <Button v-if="simulatorView && isMobile" rounded aria-label="Filter" class="absolute bottom-14 left-4 z-10" size="large" @click="handleBackButton">
+                <Button v-if="simulatorView && isMobile" rounded aria-label="Filter" class="absolute bottom-14 left-4 z-10" size="large" @click="stopFollowingLine">
                     <font-awesome-icon :icon="faArrowLeft" />
                 </Button>
             </div>
@@ -192,7 +198,7 @@ const selectDeparture = async (index) => {
     simulatorView.value = true
 }
 
-const handleBackButton = () => {
+const stopFollowingLine = () => {
     simulator.value.reset()
     simulatorView.value = false
 }

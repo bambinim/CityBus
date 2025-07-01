@@ -579,28 +579,23 @@ paths:
                 items:
                   type: object
                   properties:
-                    id:
+                    line_id:
                       type: string
-                    name:
+                    line_name:
                       type: string
-                    directions:
+                    direction_id:
+                      type: string
+                    direction_name:
+                      type: string
+                    stops:
                       type: array
                       items:
                         type: object
                         properties:
-                          id:
+                          stop_id:
                             type: string
-                          name:
+                          stop_name:
                             type: string
-                          stops:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                id:
-                                  type: string
-                                name:
-                                  type: string
         '401':
           $ref: "#/components/responses/401Unauthorized"
         '500':
@@ -643,6 +638,13 @@ paths:
         - busline
       security:
         - BearerAuth: []
+      parameters:
+        - in: path
+          name: busLineId
+          schema:
+            type: string
+          required: true
+          description: Id of the bus line
       responses:
         '200':
           description: "Resource deleted successfully"
@@ -661,6 +663,13 @@ paths:
         - busline
       security:
         - BearerAuth: []
+      parameters:
+        - in: path
+          name: busLineId
+          schema:
+            type: string
+          required: true
+          description: Id of the bus line
       responses:
         '200':
           description: "Complete bus line informations"
@@ -672,95 +681,6 @@ paths:
           $ref: "#/components/responses/401Unauthorized"
         '403':
           $ref: "#/components/responses/403Forbidden"
-        '404':
-          $ref: "#/components/responses/404NotFound"
-        '500':
-          $ref: "#/components/responses/500InternalServerError"
-  /lines/{busLineId}/directions:
-    get:
-      summary: Get all available directions for specified bus line
-      tags:
-        - busline
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: busLineId
-          schema:
-            type: string
-          required: true
-          description: Id of the bus line
-        - in: query
-          name: search
-          schema:
-            type: string
-          required: false
-          description: Search string to filter stops
-      responses:
-        '200':
-          description: List of directions for specified bus line
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                    name:
-                      type: string
-        '401':
-          $ref: "#/components/responses/401Unauthorized"
-        '404':
-          $ref: "#/components/responses/404NotFound"
-        '500':
-          $ref: "#/components/responses/500InternalServerError"
-  /lines/{busLineId}/directions/{directionId}/timetable:
-    get:
-      summary: Get timetable for specified line and direction
-      tags:
-        - busline
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: busLineId
-          schema:
-            type: string
-          required: true
-          description: Id of the bus line
-        - in: path
-          name: directionId
-          schema:
-            type: string
-          required: true
-          description: Id of the direction
-      responses:
-        '200':
-          description: Timetable for specified line and direction
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  stops:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        name:
-                          type: string
-                  timetable:
-                    type: array
-                    items:
-                      type: array
-                      items:
-                        $ref: "#/components/schemas/Time"
-        '401':
-          $ref: "#/components/responses/401Unauthorized"
         '404':
           $ref: "#/components/responses/404NotFound"
         '500':
@@ -796,10 +716,13 @@ paths:
                 items:
                   type: object
                   properties:
-                    id:
+                    stopId:
                       type: string
                     name:
                       type: string
+                    location:
+                      $ref: "#/components/schemas/GeoJSONPoint"
+                    
         '400':
           $ref: "#/components/responses/400BadRequest"
         '401':
@@ -828,52 +751,30 @@ paths:
               schema:
                 type: object
                 properties:
-                  id:
+                  busStopId:
                     type: string
-                  name:
+                  busStopName:
                     type: string
                   lines:
                     type: array
                     items:
                       type: object
                       properties:
-                        id:
+                        lineId:
                           type: string
-                        name:
+                        lineName:
                           type: string
-                        direction:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                            name:
-                              type: string
+                        directions:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              name:
+                                type: string
         '401':
           $ref: "#/components/responses/401Unauthorized"
-        '404':
-          $ref: "#/components/responses/404NotFound"
-        '500':
-          $ref: "#/components/responses/500InternalServerError"
-    delete:
-      summary: Delete bus stop
-      tags:
-        - busstop
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: busStopId
-          schema:
-            type: string
-          required: true
-          description: Id of the bus stop
-      responses:
-        '200':
-          description: Resource deleted successfully
-        '401':
-          $ref: "#/components/responses/401Unauthorized"
-        '403':
-          $ref: "#/components/responses/403Forbidden"
         '404':
           $ref: "#/components/responses/404NotFound"
         '500':
@@ -952,7 +853,12 @@ paths:
                     scheduledDepartureTimestamp:
                       type: number
                     line:
-                      $ref: "#/components/schemas/LineDirection"
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
         '401':
           $ref: "#/components/responses/401Unauthorized"
         '500':

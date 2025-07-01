@@ -21,7 +21,7 @@ exports.registerNewUser = async (req, res) => {
             password: hash,
         });
         await user.save()
-        res.status(201).send("User created successfully")
+        res.status(201).send()
     }catch (error) {
         if (error.code === 11000) {
             return res.status(400).send({message: 'Request not valid'})
@@ -58,7 +58,7 @@ exports.changeUserInformation = async (req, res) => {
         last: lastName ? lastName : user.name.last
       }
       await user.save();
-      res.status(200).send({ message: 'User updated' });
+      res.status(200).send();
     } catch (error) {
       console.error(error);
       res.status(500).send({ message: 'Server error' });
@@ -83,7 +83,7 @@ exports.updatePassword = async (req, res) => {
       if (isValidPassword) {
         user.password = await hashPassword(newPassword);
         await user.save();
-        res.status(200).json({ message: 'Password changed successfully' });
+        res.status(200).send();
       } else {
         res.status(403).json({ message: 'Old password does not match' });
       }
