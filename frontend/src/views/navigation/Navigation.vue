@@ -3,37 +3,49 @@
   <AppMenu />
   <div class="grow h-full w-full p-4 grid md:grid-cols-8 md:grid-rows-1 grid-cols-1 grid-rows-2">
     <div class="md:col-span-2 row-span-1 h-full overflow-y-auto mb-2">
-      <div class="flex flex-col md:flex-row gap-4 w-full mt-4">
-        <div class="flex-1">
-          <AutoComplete
-            v-model="departureLabel"
-            :suggestions="departureSuggestions"
-            @complete="onDepartureSearch"
-            @item-select="onDepartureSelect"
-            placeholder="Cerca punto di partenza"
-            class="w-full custom-autocomplete"
-            inputClass="w-full"
-          />
+      <Form @submit="(e) => {getPath()}">
+        <div class="flex flex-col gap-4 w-full mt-4">
+          <div class="flex-1">
+            <IftaLabel>
+              <AutoComplete
+                id="departure"
+                v-model="departureLabel"
+                :suggestions="departureSuggestions"
+                @complete="onDepartureSearch"
+                @item-select="onDepartureSelect"
+                placeholder="Cerca punto di partenza"
+                class="w-full custom-autocomplete"
+                inputClass="w-full"
+              />
+              <label for="departure">Partenza</label>
+            </IftaLabel>
+          </div>
+          <div class="flex-1">
+            <IftaLabel>
+              <AutoComplete
+                id="arrival"
+                v-model="arrivalLabel"
+                :suggestions="arrivalSuggestions"
+                @complete="onArrivalSearch"
+                @item-select="onArrivalSelect"
+                placeholder="Cerca punto di arrivo"
+                class="w-full custom-autocomplete"
+                inputClass="w-full"
+              />
+              <label for="arrival">Arrivo</label>
+            </IftaLabel>
+          </div>
+          <div class="flex-1">
+            <IftaLabel>
+              <InputText id="departure-time" type="time" v-model="departureTime" class="w-full" placeholder="Orario di partenza" />
+              <label for="departure-time">Orario di partenza</label>
+            </IftaLabel>
+          </div>
+          <div class="flex-1">
+            <Button type="submit" label="Cerca" icon="pi pi-search" class="w-full" :loading="loading" />
+          </div>
         </div>
-        <div class="flex-1">
-          <AutoComplete
-            v-model="arrivalLabel"
-            :suggestions="arrivalSuggestions"
-            @complete="onArrivalSearch"
-            @item-select="onArrivalSelect"
-            placeholder="Cerca punto di arrivo"
-            class="w-full custom-autocomplete"
-            inputClass="w-full"
-          />
-        </div>
-        <div class="w-full md:w-40">
-          <InputText type="time" v-model="departureTime" class="w-full" />
-        </div>
-        <div class="w-full md:w-32">
-          <Button type="button" label="Search" icon="pi pi-search" class="w-full" :loading="loading" @click="getPath" />
-        </div>
-      </div>
-
+      </Form>
       <div class="w-full h-full mt-4 pr-2 pb-2" v-if="bestPath">
         <Timeline :value="bestPath.legs" align="alternate" class="customized-timeline">
           <template #marker="slotProps">
