@@ -167,8 +167,7 @@ async function getPath() {
       toast.add({ severity: 'success', summary: 'Percorso trovato', life: 2000 })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Errore', detail: 'Errore durante la ricerca del percorso.', life: 4000 })
-    console.error(error)
+    toast.add({ severity: 'info', summary: 'Nessun percorso trovato', life: 4000 })
   } finally {
     loading.value = false
   }
