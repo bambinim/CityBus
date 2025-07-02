@@ -54,12 +54,14 @@ async function getNavigationPath(data) {
         const arrivalTime = new Date();
         arrivalTime.setHours(time[departureIndex + 1].hour, time[departureIndex + 1].minute, 0, 0);
         if(connection.to.toString() === arrivalStop._id.toString()){
-          const arrivalLocationArrivalTime = getArrivalTime(arrivalCoords, arrivalStop.location.coordinates, arrivalTime)
+          const footArrival = new Date(arrivalTime)
+          footArrival.setMinutes(footArrival.getMinutes() + 1)
+          const arrivalLocationArrivalTime = getArrivalTime(arrivalCoords, arrivalStop.location.coordinates, footArrival)
           conns.push({
             '@id': 'footArrival' + footConnNum,
             travelMode: 'foot',
             departureStop: connection.to.toString(),
-            departureTime: arrivalTime,
+            departureTime: footArrival,
             arrivalStop: 'arrivalLocation',
             arrivalTime: arrivalLocationArrivalTime
           })
