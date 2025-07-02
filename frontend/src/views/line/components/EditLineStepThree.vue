@@ -5,10 +5,12 @@
         </TabList>
         <TabPanels class="grow h-full">
             <TabPanel v-for="(direction, indexDir) in busLine.directions" :value="indexDir" class="h-full">
-                <div class="flex flex-row justify-center">
-                    <InputText type="time" v-model="timePicker"/>
-                    <Button label="Aggiunti orario partenza" icon="pi pi-plus" variant="outlined" class="ms-2" @click="addTime" />
-                </div>
+                <Form @submit="addTime">
+                    <div class="flex flex-row justify-center">
+                        <InputText type="time" v-model="timePicker"/>
+                        <Button type="submit" label="Aggiunti orario partenza" icon="pi pi-plus" variant="outlined" class="ms-2" />
+                    </div>
+                </Form>
                 <DataTable v-model:selection="selectedItems" :value="dataTableTransform()" dataKey="id">
                     <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
                     <Column v-for="(stop, stopIndex) in busLine.directions[currentTab].stops" :field="stopIndex.toString()" :header="stop.name"></Column>
@@ -43,7 +45,7 @@ function timeSum(time, seconds) {
     }
 }
 
-const addTime = () => {
+const addTime = (_) => {
     if (!timePicker.value) {
         return;
     }

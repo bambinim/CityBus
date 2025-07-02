@@ -11,9 +11,12 @@
                         <div class="w-full max-h-full" style="overflow: auto;">
                             <h2 class="text-lg">Fermate</h2>
                             <draggable class="mt-3" tag="ul" v-model="busLine.directions[currentTab].stops" item-key="id">
-                                <template #item="{ element: stop }">
+                                <template #item="{ index, element: stop }">
                                     <li class="flex flex-row justify-between items-center border-black border rounded-md px-3 mb-1 cursor-grab">
-                                        <font-awesome-icon :icon="faBars" />
+                                        <div>
+                                            <font-awesome-icon :icon="faBars" />
+                                            <Badge :value="index + 1" class="ms-2" />
+                                        </div>
                                         <span>{{ stop.name }}</span>
                                         <Button icon="pi pi-trash" severity="danger" variant="text" rounded aria-label="Elimina" @click="removeStop(stop)" />
                                     </li>
