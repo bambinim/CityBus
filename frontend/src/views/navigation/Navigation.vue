@@ -2,55 +2,10 @@
   <Toast />
   <div class="flex flex-col w-full h-full">
     <AppMenu />
-  
     <div class="grow h-full w-full p-2 flex flex-col md:flex-row">
-      <div class="md:basis-1/4 mb-2 md:me-2 flex flex-col">
-        <div class="shrink-0">
-          <Form @submit="(e) => {getPath()}">
-            <div class="flex flex-col gap-4 w-full mt-4">
-              <div class="flex-1">
-                <IftaLabel>
-                  <AutoComplete
-                    id="departure"
-                    v-model="departureLabel"
-                    :suggestions="departureSuggestions"
-                    @complete="onDepartureSearch"
-                    @item-select="onDepartureSelect"
-                    placeholder="Cerca punto di partenza"
-                    class="w-full custom-autocomplete"
-                    inputClass="w-full"
-                  />
-                  <label for="departure">Partenza</label>
-                </IftaLabel>
-              </div>
-              <div class="flex-1">
-                <IftaLabel>
-                  <AutoComplete
-                    id="arrival"
-                    v-model="arrivalLabel"
-                    :suggestions="arrivalSuggestions"
-                    @complete="onArrivalSearch"
-                    @item-select="onArrivalSelect"
-                    placeholder="Cerca punto di arrivo"
-                    class="w-full custom-autocomplete"
-                    inputClass="w-full"
-                  />
-                  <label for="arrival">Arrivo</label>
-                </IftaLabel>
-              </div>
-              <div class="flex-1">
-                <IftaLabel>
-                  <InputText id="departure-time" type="time" v-model="departureTime" class="w-full" placeholder="Orario di partenza" />
-                  <label for="departure-time">Orario di partenza</label>
-                </IftaLabel>
-              </div>
-              <div class="flex-1">
-                <Button type="submit" label="Cerca" icon="pi pi-search" class="w-full" :loading="loading" />
-              </div>
-            </div>
-          </Form>
-        </div>
-        <div class="w-full flex-1 mt-4 pr-2 pb-2 overflow-auto" v-if="pathFiltered">
+      <div class="md:basis-1/4 mb-2 md:me-2 flex flex-col md:h-full w-full overflow-y-auto h-1/2">
+        <div v-if="pathFiltered" class="text-end">
+          <Button icon="pi pi-times" severity="danger" variant="text" rounded aria-label="Chiudi percorso" @click="() => pathFiltered = undefined" />
           <Timeline :value="pathFiltered.legs" align="alternate" class="customized-timeline">
             <template #marker="slotProps">
               <div :style="{ backgroundColor: slotProps.index == pathFiltered.legs.length - 1 ? 'red' : (slotProps.item.type == 'bus' ? 'dodgerblue' : 'orange') }" class="rounded-full">
@@ -89,12 +44,55 @@
               </Card>
             </template>
           </Timeline>
+        </div>
+        <Form v-else @submit="(e) => {getPath()}">
+          <div class="flex flex-col gap-4 w-full mt-4">
+            <div class="flex-1">
+              <IftaLabel>
+                <AutoComplete
+                  id="departure"
+                  v-model="departureLabel"
+                  :suggestions="departureSuggestions"
+                  @complete="onDepartureSearch"
+                  @item-select="onDepartureSelect"
+                  placeholder="Cerca punto di partenza"
+                  class="w-full custom-autocomplete"
+                  inputClass="w-full"
+                />
+                <label for="departure">Partenza</label>
+              </IftaLabel>
+            </div>
+            <div class="flex-1">
+              <IftaLabel>
+                <AutoComplete
+                  id="arrival"
+                  v-model="arrivalLabel"
+                  :suggestions="arrivalSuggestions"
+                  @complete="onArrivalSearch"
+                  @item-select="onArrivalSelect"
+                  placeholder="Cerca punto di arrivo"
+                  class="w-full custom-autocomplete"
+                  inputClass="w-full"
+                />
+                <label for="arrival">Arrivo</label>
+              </IftaLabel>
+            </div>
+            <div class="flex-1">
+              <IftaLabel>
+                <InputText id="departure-time" type="time" v-model="departureTime" class="w-full" placeholder="Orario di partenza" />
+                <label for="departure-time">Orario di partenza</label>
+              </IftaLabel>
+            </div>
+            <div class="flex-1">
+              <Button type="submit" label="Cerca" icon="pi pi-search" class="w-full" :loading="loading" />
+            </div>
+          </div>
+        </Form>
+      </div>
+      <div class="md:basis-3/4 p-1 md:h-full w-full h-1/2">
+        <NavigationMap :pathToFollow="pathToFollow" :pathFiltered="pathFiltered" @update:departure="updateDeparture" @update:arrival="updateArrival" />
       </div>
     </div>
-    <div class="md:basis-3/4 p-1 h-full w-full">
-      <NavigationMap :pathToFollow="pathToFollow" :pathFiltered="pathFiltered" @update:departure="updateDeparture" @update:arrival="updateArrival" />
-    </div>
-  </div>
   </div>
 </template>
 
