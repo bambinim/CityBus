@@ -473,14 +473,24 @@ paths:
         - BearerAuth: []
       parameters:
         - in: query
-          name: departure_timestamp
+          name: departure
+          schema:
+            type: string
+          description: Departure position in format longitude;latitude
+        - in: query
+          name: arrival
+          schema:
+            type: string
+          description: Arrival position in format longitude;latitude
+        - in: query
+          name: departureTime
           schema:
             type: number
           description: The departure timestamp
           required: true
       responses:
         '200':
-            description: "TODO: write description"
+            description: "Navigation route between specified points"
             content:
               application/json:
                 schema:
