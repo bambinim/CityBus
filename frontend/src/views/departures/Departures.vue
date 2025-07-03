@@ -17,10 +17,11 @@
                     type="time"
                     v-model="dataPicker"
                     />
-                <Button label="Search" icon="pi pi-search" @click="viewDepartures()" />
-                <Button
-                    label="Stop"
-                    icon="pi pi-stop"
+                <Button label="Cerca corse" icon="pi pi-search" @click="viewDepartures()" />
+                <Button 
+                    icon="pi pi-times"
+                    label="Interrompi monitoraggio"
+                    variant="text"
                     severity="danger"
                     @click="stopFollowingLine()"
                 />
@@ -34,9 +35,11 @@
                         <p class="col-span-3">
                             {{ departure.direction.name }}
                         </p>
-                        <div class="col-span-1 justify-end">
-                            <font-awesome-icon :icon="faMagnifyingGlass" style="color: #2b7fff;" class="hover:cursor-pointer" @click="selectDeparture(index)"/>
-                        </div>         
+                        <Button class="col-span-1 justify-end" rounded variant="text" aria-label="Monitora corsa" @click="selectDeparture(index)">
+                            <template #icon>
+                                <font-awesome-icon :icon="faMagnifyingGlass"/>
+                            </template>
+                        </Button>      
                     </div>
                 </template>
                 <template #content>
@@ -57,7 +60,7 @@
         <div v-if="simulatorView" class="md:col-span-2 col-span-4 grid grid-cols-2 grid-rows-2 h-full overflow-y-auto">
             <div class="relative col-span-2 row-span-1 h-full">
                 <RideMap class="z-0"/>
-                <Button v-if="simulatorView && isMobile" rounded aria-label="Filter" class="absolute bottom-14 left-4 z-10" size="large" @click="stopFollowingLine">
+                <Button v-if="simulatorView && isMobile" rounded aria-label="Interrompi Monitoraggio" class="absolute bottom-14 left-4 z-10" size="large" @click="stopFollowingLine">
                     <font-awesome-icon :icon="faArrowLeft" />
                 </Button>
             </div>
