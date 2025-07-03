@@ -14,67 +14,68 @@ const processDirections = async ({ session, directions }) => {
         const stops = [];
 
         for (let i = 0; i < direction.stops.length; i++) {
-        const rawStop = direction.stops[i];
+            const rawStop = direction.stops[i];
 
-        const key = typeof rawStop === 'string'
-            ? rawStop
-            : `${rawStop.name}-${JSON.stringify(rawStop.location)}`;
+            const key = typeof rawStop === 'string'
+                ? rawStop
+                : `${rawStop.name}-${JSON.stringify(rawStop.location)}`;
 
-        let stopDoc = stopCache.get(key);
-        if (!stopDoc) {
-            if (typeof rawStop === 'string') {
-                stopDoc = await BusStop
-                    .findOne({ _id: rawStop })
-                    .session(session)
-                    .exec();
-                } else {
-                stopDoc = await BusStop
-                    .findOne({ name: rawStop.name, location: rawStop.location })
-                    .session(session)
-                    .exec();
-            }
+            let stopDoc = stopCache.get(key);
             if (!stopDoc) {
-                stopDoc = new BusStop({
-                    name: rawStop.name,
-                    location: rawStop.location
-                });
-                await stopDoc.save({ session });
+                if (typeof rawStop === 'string') {
+                    stopDoc = await BusStop
+                        .findOne({ _id: rawStop })
+                        .session(session)
+                        .exec();
+                    } else {
+                    stopDoc = await BusStop
+                        .findOne({ name: rawStop.name, location: rawStop.location })
+                        .session(session)
+                        .exec();
+                }
+                if (!stopDoc) {
+                    stopDoc = new BusStop({
+                        name: rawStop.name,
+                        location: rawStop.location
+                    });
+                    await stopDoc.save({ session });
+                }
+
+                stopCache.set(key, stopDoc);
             }
 
-            stopCache.set(key, stopDoc);
-        }
+            let routeToNext;
+            if (i < direction.stops.length - 1) {
+                routeToNext = new Route({
+                path: direction.routeLegs[i].steps,
+                type: 'partial'
+                });
+                await routeToNext.save({ session });
+            }
 
-        let routeToNext;
-        if (i < direction.stops.length - 1) {
-            routeToNext = new Route({
-            path: direction.routeLegs[i].steps,
-            type: 'partial'
+            stops.push({
+                stopId: stopDoc._id,
+                name: stopDoc.name,
+                routeToNext: routeToNext?._id,
+                timeToNext: i === direction.stops.length - 1
+                ? 0
+                : direction.routeLegs[i].duration
             });
-            await routeToNext.save({ session });
-        }
-
-        stops.push({
-            stopId: stopDoc._id,
-            name: stopDoc.name,
-            routeToNext: routeToNext?._id,
-            timeToNext: i === direction.stops.length - 1
-            ? 0
-            : direction.routeLegs[i].duration
-        });
         }
 
         const fullRoute = new Route({
-        path: direction.routeLegs.flatMap(leg =>
-            leg.steps.map(step => ({
-            duration: step.duration,
-            geometry: step.geometry
-            }))
-        ),
-        type: 'full'
+            path: direction.routeLegs.flatMap(leg =>
+                leg.steps.map(step => ({
+                duration: step.duration,
+                geometry: step.geometry
+                }))
+            ),
+            type: 'full'
         });
         await fullRoute.save({ session });
 
         processed.push({
+            _id: direction._id,
             name: direction.name,
             stops,
             timetable: direction.timetable,
@@ -330,16 +331,21 @@ exports.editBusLine = async (req, res) => {
             await removeOldLineData({ session, line: originalLine })
 
             const processedDirections = await processDirections({ session, directions })
-            
+
+            if (processedDirections.length == originalLine.directions.length) {
+                for (const i in processedDirections) {
+                    if (originalLine.directions[i].name == processedDirections[i].name) {
+                        processedDirections[i]._id = originalLine.directions[i]._id
+                    }
+                }
+            }
+
             originalLine.directions = processedDirections
 
             const updatedBusLine = await originalLine.save({ session })
             await updateLinesCollateralCollections({ session, busLine: updatedBusLine })
         })
-
-        res.status(200).json({
-            message: "Bus line modified successfully",
-        });
+        res.send(200);
     } catch (error) {
         if (error.message === "Bus Line not found") {
             return res.status(404).json({ message: error.message });

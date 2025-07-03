@@ -863,12 +863,7 @@ paths:
                     scheduledDepartureTimestamp:
                       type: number
                     line:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        name:
-                          type: string
+                      $ref: "#/components/schemas/LineDirection"
         '401':
           $ref: "#/components/responses/401Unauthorized"
         '500':
