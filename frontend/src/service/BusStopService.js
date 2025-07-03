@@ -59,10 +59,16 @@ export const BusStopService = {
     },
     async getDepartures(data){
         let msg = ''
-        const{stopId, departureTimestamp} = data
+        const{stopId, departureTimestamp, lineId} = data
+        let queryParams = []
 
+        queryParams.push(`departure_timestamp=${encodeURIComponent(departureTimestamp)}`)
+        if (lineId) {
+            queryParams.push(`line=${encodeURIComponent(lineId)}`);
+        }
+        const queryString = queryParams.join('&');
         try{
-            const res = await requests.get(`/stops/${stopId}/departures?departure_timestamp=${departureTimestamp}`, {authenticated: true})
+            const res = await requests.get(`/stops/${stopId}/departures?${queryString}`, {authenticated: true})
             if (res.status == 200) {
                 return res.data;
             }
