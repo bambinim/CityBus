@@ -88,69 +88,87 @@ exports.getBusStopInformation = async (req,res) => {
 }
 
 exports.getDepartures = async (req, res) => {
-    const busStopId = req.params.id
-    const departure_timestamp = req.query.departure_timestamp
+    const busStopId = req.params.id;
+    const departureTimestamp = req.query.departure_timestamp;
+    const lineId = req.query.line;
 
-    try{
-
-        const stop = await BusStop.findById(busStopId)
-        const response = []
+    try {
+        const stop = await BusStop.findById(busStopId);
         if (!stop) {
             return res.status(404).json({ message: 'Bus stop not found' });
         }
 
-        await Promise.all(stop.connectedLineDirections.map(async direction => {
-            const line = await BusLine.findOne({ 'directions._id': direction }, 'name directions.$');
+        const rideData = new RideDataProvider();
+        await rideData.connect();
 
-            if (!line) {
-                return null;
-            }
+        const response = [];
 
-            const dir = line.directions[0]
-
-            const rides = await BusRide.find({
-                lineId: line._id, 
-                directionId: dir._id,
-                stops: {
-                    $elemMatch: {
-                        stopId: stop._id,
-                        expectedArrivalTimestamp: { $gte: departure_timestamp }
-                    }
-                },
-                status: "running"
-            });
-
-            const rideData = new RideDataProvider()
-            await rideData.connect()
-            return Promise.all(rides.map(async (ride) => {
+        // Helper: processa i rides e popola response
+        const processRides = async (rides, line, dir) => {
+            await Promise.all(rides.map(async (ride) => {
                 const redisData = await rideData.getRide(ride._id.toString());
                 if (!redisData) {
                     throw new Error('Ride data not available for ride ID ' + ride._id);
                 }
-    
+
                 const stopInfo = ride.stops.find(s => s.stopId.equals(stop._id));
-                if (!stopInfo) {
-                    return null;
-                }
+                if (!stopInfo) return;
 
                 response.push({
                     id: line._id,
                     name: line.name,
                     direction: {
-                        id: direction._id,
+                        id: dir._id,
                         name: dir.name
                     },
                     rideId: ride._id,
                     scheduledArrivalTimestamp: stopInfo.expectedArrivalTimestamp,
                     delay: redisData.minutesLate
-                })
+                });
             }));
-        }));
+        };
 
-        res.status(200).json(response)
+        if (lineId) {
+            const line = await BusLine.findById(lineId);
+            if (!line) {
+                return res.status(404).json({ message: 'Line not found' });
+            }
 
-    }catch (error) {
+            const rides = await BusRide.find({
+                lineId: new mongoose.Types.ObjectId(lineId),
+                stops: { $elemMatch: { stopId: stop._id } },
+                status: "running"
+            });
+
+            const dir = line.directions[0];
+            await processRides(rides, line, dir);
+        } else {
+            await Promise.all(stop.connectedLineDirections.map(async (directionId) => {
+                const line = await BusLine.findOne({ 'directions._id': directionId }, 'name directions.$');
+                if (!line) return;
+
+                const dir = line.directions[0];
+
+                const rides = await BusRide.find({
+                    lineId: line._id,
+                    directionId: dir._id,
+                    stops: {
+                        $elemMatch: {
+                            stopId: stop._id,
+                            expectedArrivalTimestamp: { $gte: departureTimestamp }
+                        }
+                    },
+                    status: "running"
+                });
+
+                await processRides(rides, line, dir);
+            }));
+        }
+
+        res.status(200).json(response);
+
+    } catch (error) {
         console.error('Error fetching bus stop:', error);
         res.status(500).json({ message: 'Error processing your request' });
     }
-}
+};

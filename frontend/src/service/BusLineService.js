@@ -34,6 +34,20 @@ export const BusLineService = {
         }
         throw msg
     },
+    async getBusLines(query = {}){
+        let msg = ''
+        const {search} = query
+        try{
+            const res = await requests.get(`/lines?search=${search}`, {authenticated: true})
+            if (res.status == 200) {
+                return res.data;
+            }
+            msg = 'Nessuna linea trovata'
+        }catch{
+            msg = 'Errore nella richiesta'
+        }
+        throw msg
+    },
     async getBusLinesDetailedInformation(){
         let msg = '';
         try{

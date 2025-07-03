@@ -10,9 +10,8 @@
             <l-marker
                 :lat-lng="center"
                 :name="name">
-                <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
-                    <div class="rounded-full inline-flex justify-center items-center"  style="padding: 4px 8px; background-color: blue;">
-                        <span style="color: white;">{{ name }}</span>
+                <l-icon :iconSize="[0, 0]" :iconAnchor="[8, 8]">
+                    <div class="rounded-full inline-flex justify-center items-center"  style="padding: 8px; background-color: red;">
                     </div>
                 </l-icon>
             </l-marker>

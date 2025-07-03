@@ -39,10 +39,11 @@ export const BusRideService = {
         throw msg
     },
 
-    async getBusRidesList() {
+    async getBusRidesList(line) {
         let msg = ''
         try {
-            const res = await requests.get(`/rides`, {authenticated: true})
+            const query = line ? `?line=${encodeURIComponent(line)}` : '';
+            const res = await requests.get(`/rides${query}`, {authenticated: true})
             if (res.status == 200) {
                 return res.data
             }
