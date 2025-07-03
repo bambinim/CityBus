@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from "vue";
-import { faCompass, faMap, faRoad, faClock, faBus, faUser, faRightFromBracket, faGear, faUsers } from '@fortawesome/free-solid-svg-icons'
+import { faCompass, faMap, faRoad, faClock, faUser, faRightFromBracket, faGear } from '@fortawesome/free-solid-svg-icons'
 import { useUserStore } from '@/stores/user'
 import { useAuthenticationStore } from '@/stores/authentication';
 import { AuthenticationService } from '@/service/AuthenticationService';
@@ -19,7 +19,6 @@ const menuBarItems = computed(() => {
         items.push({label: 'Amministrazione', icon: faGear, items: [
             {label: 'Mappa', icon: faMap, command: () => router.push('/rides-map')},
             {label: 'Linee', icon: faRoad, command: () => router.push('/lines/view')},
-            {label: 'Utenti', icon: faUsers}
         ]})
     }
     return items;

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import { LMap, LTileLayer, LControlZoom, LMarker, LIcon, LPopup } from "@vue-leaflet/vue-leaflet";
+import { LMap, LTileLayer, LControlZoom, LMarker, LIcon, LCircleMarker } from "@vue-leaflet/vue-leaflet";
 import { faEye, faEyeSlash, faArrowRightArrowLeft, faBus, faRoute, faClock, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { BusRideService } from '@/service/BusRideService';
 import { WebSocket } from '@/lib/websocket'
@@ -55,6 +55,9 @@ const updateRealTimeData = (ridesData) => {
     ridesData.forEach(ride => {
         realTimeData.value[ride.rideId] = ride;
     });
+    if (rideToFollow.value) {
+        rideToFollow.value.minutesLate = realTimeData.value[rideToFollow.value.key].minutesLate
+    }
 }
 
 const linesNodes = computed(() => Object.entries(convertRidesToLines()).map(([lineId, line]) => {
@@ -162,7 +165,7 @@ watch(ridesPositions, (newRidesPosition) => {
     })
 });
 
-const setRideToFollowFromMapClick = (rideId) => {
+const setRideToFollow = (rideId) => {
     const time = new Date(rides.value.filter(r => r.id == rideId)[0].scheduledDepartureTimestamp)
     rideToFollow.value = {
         key: rideId,
@@ -183,14 +186,20 @@ const setRideToFollowFromMapClick = (rideId) => {
                     layer-type="base"
                     name="OpenStreetMap"
                 ></l-tile-layer>
-                <l-marker v-for="(ride, _) in ridesPositions"
+                <!--<l-marker v-for="(ride, _) in ridesPositions"
                     :lat-lng="{lng: ride.position[0], lat: ride.position[1]}"
-                    @click="_ => setRideToFollowFromMapClick(ride.id)">
+                    @click="_ => setRideToFollow(ride.id)">
                     <l-icon :iconSize="[0, 0]" :iconAnchor="[8, 8]">
                         <div v-if="rideToFollow && rideToFollow.key == ride.id" class="rounded-full" style="padding: 8px 8px; background-color: red;"></div>
                         <div v-else class="rounded-full" style="padding: 8px 8px; background-color: blue;"></div>
                     </l-icon>
-                </l-marker>
+                </l-marker>-->
+                <l-circle-marker v-for="(ride, _) in ridesPositions"
+                    :lat-lng="{lng: ride.position[0], lat: ride.position[1]}"
+                    :radius="8"
+                    :color="rideToFollow && rideToFollow.key == ride.id ? 'red' : 'blue'"
+                    @click="_ => setRideToFollow(ride.id)">
+                </l-circle-marker>
                 <div v-if="rideToFollow" class="absolute top-2 right-2 z-[1000]">
                     <Card>
                         <template #title>
@@ -234,7 +243,7 @@ const setRideToFollowFromMapClick = (rideId) => {
                     <Button v-else label="Collassa tutti" severity="info" variant="text" @click="_ => expandedKeys = {}" />
                 </div>
                 <div>
-                    <Button v-if="hiddenKeys.size == 0" label="Nascondi tutti" severity="info" variant="text" @click="_ => hideAll()" />
+                    <Button v-if="hiddenKeys.size == 0" label="Nascondi tutti" severity="info" variant="text" @click="_ => hideAll()"/>
                     <Button v-else label="Mostra tutti" severity="info" variant="text" @click="_ => hiddenKeys.clear()" />
                 </div>
             </div>
