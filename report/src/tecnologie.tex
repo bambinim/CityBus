@@ -1,0 +1,60 @@
+\section{Tecnologie}
+
+\subsection{Stack e librerie}
+
+Alla base dell'applicativo c'è lo stack MEVN (MongoDB, Express.js, Vue.js, Node.js); a questo sono state aggiunte sia librerie che forniscono componenti di UI sia librerie che implementano funzionalità essenziali per l'applicazione.
+
+\subsubsection{PrimeVue}
+
+PrimeVue è una libreria che fornisce componenti UI avanzati che permettono di realizzare interfacce con funzionalità avanzate.
+
+\subsubsection{Socket.io}
+
+Socket.io è una libreria che implementa una comunicazione in tempo reale tra server e client utilizzando diverse tecnologie, tra le quali c'è anche websocket. È stata utilizzata per i seguenti scopi:
+\begin{itemize}
+    \item trasmettere la posizione degli autobus in tempo reale
+    \item ottenere la posizione degli autobus in tempo reale per la dashboard di monitoraggio
+    \item ottenere la posizione degli autobus in tempo reale per la navigazione
+\end{itemize}
+\iffalse TODO: verificare e/o modificare lista \fi
+
+\subsubsection{Leaflet e Vue Leaflet}
+
+Leaflet è una libreria che permette di integrare le mappe di OpenStreetMap all'interno di pagine web utilizzando codice JavaScript. Vue Leaflet è un wrapper che mette a disposizione le funzioni di Leaflet tramite componenti ed API Vue.js.
+
+\subsubsection{CSA.js}
+La libreria csa (Connection Scan Algorithm) è una libreria progettata per calcolare percorsi ottimali nei sistemi di trasporto pubblico, come autobus, treni o reti multimodali. Si basa sull’algoritmo Connection Scan, un algoritmo efficiente per la ricerca di percorsi minimi in orari di trasporto pubblico rappresentati come insiemi di "connessioni" (tratte tra due fermate con orari di partenza e arrivo).
+\subsection{Software di terze parti}
+
+Data l'elevata complessità del progetto, è stato necessario appoggiarsi a numerose tecnologie e progetti esterni. Di seguito verranno esplicitati tutti con una breve descrizione dell'utilizzo che ne abbiamo fatto.
+
+\subsubsection{OpenStreetMap}
+
+OpenStreetMap è un progetto che fornisce in modo gratuito mappe di tutto il mondo; è stato utilizzato come sorgente dati per la visualizzazione di tutte le mappe dell'applicativo.
+
+\subsubsection{Nominatim}
+
+Nominatim è il servizio che permette di cercare luoghi geografici tramite il loro nome (geocoding). Anche questo è un servizio open source e utilizza i dati di OpenStreetMap.
+È stato utilizzato sia all'interno del sistema di pianificazione dei percorsi che nell'interfaccia di navigazione per agevolare l'utente, permettendogli di cercare luoghi tramite il loro nome e non dover per forza selezionare punti dalla mappa o inserire manualmente le coordinate.
+
+\subsubsection{Project OSRM}
+Project OSRM è un routing engine open source che si appoggia ai dati di OpenStreetMap. La sua funzionalità principale è quella di calcolare il percorso più veloce da un punto A a un punto B.
+Viene utilizzato dall'interfaccia di pianificazione dei percorsi per generare in automatico il percorso migliore per ciascun autobus che passi per tutte le fermate definite dall'utente.
+
+\subsubsection{Redis}
+
+Redis è un database in-memory, questo significa che conserva tutti i dati che vengono inseriti al suo interno esclusivamente nella memoria RAM; questa sua caratteristica gli permette di avere un accesso ai dati estremamente veloce. Redis implementa inoltre il paradigma publish/subscribe (in maniera simile al protocollo MQTT).
+
+Grazie a queste sue caratteristiche è stato utilizzato per eseguire 2 diversi compiti.
+\begin{itemize}
+    \item \textbf{memorizzazione posizione degli autobus}:  La funzione di database in-memory è stata utilizzata per memorizza la posizione in tempo reale degli autobus. Dato che questa viene aggiornata con una frequenza molto elevata memorizzarla all'interno di MongoDB sarebbe stato sicuramente meno veloce ed efficiente e, dato che la dimensione del dato è estremamente ridotta, si presta ed essere memorizzata all'interno di Redis.
+    \item \textbf{broker per i dati in tempo reale}: È stata sfruttata la funzione publish/subscribe per inviare i dati che gli autobus trasmettono in tempo reale ai client.
+\end{itemize}
+
+\subsubsection{Docker}
+
+Docker è stato utilizzato sia in fase di sviluppo che per il deployment.
+
+Tramite l'estensione \verb|devcontainer| in fase di sviluppo è stato possibile creare un ambiente controllato e unificato che ha agevolato il lavoro, permettendo di avere in ciascuna macchina esattamente lo stesso ambiente e stack software.
+
+Durante il deployment invece è stato estremamente utile sia per semplificare l'installazione di tutti i componenti e software di terze parti necessari, che per realizzare un'infrastruttura in cui è possibile scalare ogni singolo componente in base al carico e alle risorse utilizzate.

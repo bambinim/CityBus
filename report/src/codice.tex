@@ -1,0 +1,204 @@
+\section{Codice}
+
+\subsection{Struttura del progetto}
+
+Il progetto CityBus è suddiviso in due macro-componenti principali:
+
+\begin{itemize}
+    \item Backend: Implementa la logica di business, l’accesso ai dati, la gestione delle linee, fermate, corse e il calcolo dei percorsi.
+    \item Frontend: Applicazione web (SPA, Vue.js) per la consultazione, gestione e simulazione del servizio.
+\end{itemize}
+
+\subsection{Backend}
+
+\subsubsection{Gestione delle corse e simulazione}
+
+La gestione delle corse (\texttt{BusRide}) rappresenta uno degli aspetti centrali. Questo modulo consente di creare, aggiornare, monitorare e simulare le corse degli autobus in tempo reale, offrendo sia funzionalità amministrative che strumenti per la visualizzazione dinamica lato utente.
+
+La gestione delle corse è affidata a due componenti principali: \texttt{BusRideManager} e \texttt{RideAgent}. Questi orchestrano la simulazione delle corse, il loro avanzamento e la comunicazione in tempo reale con i client tramite WebSocket e Redis.
+Il \texttt{BusRideManager} mantiene una lista di agenti (\texttt{RideAgent}) attivi e, tramite un ciclo periodico, verifica quali corse devono essere avviate o terminate. Per ogni corsa attiva, viene creato un nuovo agente che ne gestisce la simulazione.
+
+\begin{lstlisting}[language=JavaScript]
+// Estratto da BusRideManager.js
+class BusRideManager {
+    constructor() { this.agents = []; }
+    async init(io) {
+        this.io = io;
+        this.startLoop();
+    }
+    async startLoop() {
+        setInterval(async () => {
+            // Per ogni corsa programmata
+            const lines = await BusLine.find().populate('directions');
+            lines.map(line =>
+                line.directions.map(direction =>
+                    direction.timetable.map(async time => {
+                        const ride = await BusRide.findOne({ /* ... */ });
+                        const agent = this.agents.find(ag => ag.ride._id.toString() == ride._id.toString());
+                        if (!agent && ride) {
+                            const newAgent = new RideAgent(ride, this.io);
+                            newAgent.start();
+                            this.agents.push(newAgent);
+                        }
+                    })
+                )
+            );
+        }, 10000);
+    }
+}
+\end{lstlisting}
+
+\subsubsection{RideAgent e simulazione}
+
+Ogni \texttt{RideAgent} simula l’avanzamento della corsa, calcola la posizione del bus e comunica gli aggiornamenti tramite WebSocket. Se la corsa termina, l’agente la marca come conclusa e si ferma.
+
+\begin{lstlisting}[language=JavaScript]
+// Estratto da RideAgent.js
+class RideAgent {
+    constructor(ride, io) { /* ... */ }
+    async start() {
+        this.interval = setInterval(async () => {
+            const position = await getBusPosition(this.ride);
+            if (!position) {
+                this.ride.stops.forEach(stop => stop.isBusPassed = true);
+                await this.ride.save();
+                this.stop();
+                return;
+            }
+            this.socket.emit("put", JSON.stringify(position));
+        }, 1000);
+    }
+    stop() {
+        clearInterval(this.interval);
+        if (this.socket) this.socket.disconnect();
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Aggiornamento tramite WebSocket e Redis}
+
+Gli aggiornamenti di posizione vengono inviati tramite WebSocket ai client. Il controller (\texttt{socketsController.js}) riceve i dati, aggiorna lo stato della corsa e li propaga tramite Redis per garantire scalabilità e sincronizzazione tra più istanze.
+
+\begin{lstlisting}
+// Estratto da socketsController.js
+socket.on('put', async (position) => {
+    const rideData = await calculateRealTimeRideData({rideId, position: JSON.parse(position)});
+    await rideDataProvider.setRide(rideId, rideData); // Aggiorna Redis
+});
+rideDataEvent.onMessage((rideData) => {
+    socket.emit('ride_update', rideData); // Inoltra ai client
+});
+\end{lstlisting}
+
+\subsubsection{Navigazione}
+
+La funzionalità di navigazione è affidata al modulo \texttt{pathFinder}, che implementa la logica per il calcolo dei percorsi ottimali tra due punti della rete di trasporto pubblico. Il cuore di questo componente è la funzione \texttt{getNavigationPath}, che sfrutta l’algoritmo Connection Scan (CSA) per trovare il percorso più efficiente combinando tratte a piedi e tratte in autobus.
+
+Per ogni richiesta di percorso, il sistema:
+\begin{itemize}
+    \item Identifica le fermate più vicine ai punti di partenza e arrivo tramite query geospaziali.
+    \item Costruisce una lista di “connessioni” che rappresentano sia i tratti a piedi (dall’utente alla fermata e viceversa) sia le tratte in autobus, includendo orari di partenza e arrivo.
+    \item Per ogni connessione bus, calcola gli orari effettivi in base alla tabella oraria della linea e della direzione.
+\end{itemize}
+
+\begin{lstlisting}
+// Estratto da pathFinder.js
+conns.push({
+    '@id': connectionId,
+    travelMode: 'bus',
+    departureStop: departureStopId,
+    departureTime: departureTime,
+    arrivalStop: arrivalStopId,
+    arrivalTime: arrivalTime
+});
+// ...aggiunta delle connessioni bus e a piedi...
+\end{lstlisting}
+
+Le connessioni vengono ordinate per orario di partenza e passate a un planner CSA, che elabora il percorso ottimale tramite uno stream. Il risultato è una sequenza di tratte (bus e piedi) che minimizza il tempo totale di viaggio.
+
+\begin{lstlisting}
+// Esecuzione del planner CSA
+const planner = new csa.BasicCSA({
+    departureStop: departureStop,
+    arrivalStop: arrivalStop,
+    departureTime: departureTime
+});
+const connectionsReadStream = Readable.from(conns);
+connectionsReadStream.pipe(planner);
+
+planner.on("result", function (result) {
+    resolve(result);
+});
+\end{lstlisting}
+
+Il percorso calcolato viene restituito come lista di tratte, ciascuna con informazioni su tipo di spostamento, orari, e fermate. Questa logica è utilizzata dal controller delle rotte per fornire agli utenti itinerari dettagliati e ottimizzati.
+
+\subsection{Frontend}
+
+\subsubsection{Autenticazione e Registrazione: gestione dei Bearer Token}
+
+L'autenticazione e la registrazione nel frontend sono progettate per garantire sicurezza e praticità, facendo uso di Bearer Token (JWT) per la gestione delle sessioni utente. L'intero flusso si basa su chiamate HTTP sicure e sulla conservazione dei token in locale, con rinnovo automatico quando necessario.
+
+Il login è gestito tramite \texttt{AuthenticationService}. Al successo, il backend restituisce un JWT e un token di rinnovo (\texttt{renewToken}). Questi vengono salvati nello store locale e utilizzati per autenticare tutte le richieste successive tramite l'header \texttt{Authorization: Bearer <jwt>}.
+
+\begin{lstlisting}
+// src/service/AuthenticationService.js
+export const AuthenticationService = {
+    async login(email, password) {
+        const res = await requests.post(`/auth/session`, { data: {email, password} })
+        if (res.status == 201) {
+            return {jwt: res.data.jwt, renewToken: res.data.renewToken}
+        }
+        throw 'Email o password non validi'
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}
+// src/stores/authentication.js
+export const useAuthenticationStore = defineStore('authentication', {
+    state: () => ({
+        jwt: localStorage.getItem('jwt'),
+        renewToken: localStorage.getItem('renewToken')
+    }),
+    actions: {
+        setTokens(jwt, renewToken) {
+            this.jwt = jwt
+            localStorage.setItem('jwt', jwt)
+            this.renewToken = renewToken
+            localStorage.setItem('renewToken', renewToken)
+        },
+        deleteTokens() {
+            localStorage.removeItem('jwt')
+            localStorage.removeItem('renewToken')
+        }
+    }
+});
+\end{lstlisting}
+
+Prima di ogni richiesta autenticata, il frontend verifica la validità del JWT. Se il token è scaduto, viene automaticamente rinnovato utilizzando il \texttt{renewToken}. Tutte le richieste protette includono l'header \texttt{Authorization} con il Bearer Token.
+
+\begin{lstlisting}
+// src/lib/requests.js
+async function getAuthorizationHeader() {
+    const authStore = useAuthenticationStore()
+    const decoded = jwtDecode(authStore.jwt)
+    if (decoded.exp < Math.floor(Date.now() / 1000) ) {
+        await renewAuthenticationToken(authStore);
+    }
+    return `Bearer ${authStore.jwt}`
+}
+
+async function request(method, endpoint, data, authenticated) {
+    const headers = {}
+    if (authenticated) {
+        headers['Authorization'] = await getAuthorizationHeader()
+    }
+    return await instance.request({
+        url: endpoint,
+        method: method,
+        data: data,
+        headers: headers
+    })
+}
+\end{lstlisting}

@@ -1,0 +1,26 @@
+\section{Deployment}
+
+Per il deployment dell'applicativo si è scelto di utilizzare Docker in modo da facilitare l'installazione e al contempo avere un'elevata modularità e semplicità di gestione dell'infrastruttura.
+Come si può vedere in figura \ref{fig:deployment_schema} deployment è composto da 4 container: 2 contengono i database (MongoDB e Redis) e gli altri due contengono rispettivamente le API e l'interfaccia web.
+Si è scelto di separare API e frontend principalmente per una questione di scalabilità; questa separazione permette infatti di aumentare il numero di repliche di uno dei due componenti nel caso si rendesse necessario per questioni di prestazioni e di gestione del carico di lavoro, senza dover aumentare anche il numero di repliche dell'altro componente e quindi senza sprecare risorse.
+
+Si è anche scelto di utilizzare il container contenente il frontend come entrypoint di tutto l'applicativo, senza quindi dover esporre direttamente nessuna porta dagli altri container; all'interno del container del frontend è infatti presente il web server NGINX che offre la possibilità di configurare un reverse proxy che permette di raggiungere altri web server (in questo caso quello delle API) senza che vengano esposti pubblicamente e mantenendo un unico punto di ingresso.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/deployment_diagram.png}
+    \caption{Schema deployment}
+    \label{fig:deployment_schema}
+\end{figure}
+
+Per favorire maggiormente la scalabilità e il bilanciamento del carico si potrebbe fare un'ulteriore modifica a questa infrastruttura: si potrebbe utilizzare come entrypoint un'istanza dedicata di NGINX configurata in modo da comportarsi come load balancer facendo reverse proxy sia sul web server che espone le API sia su quello che espone l'interfaccia.
+
+\subsection{Istruzioni per il deployment}
+
+Eseguire il deployment dell'applicativo è un'operazione estremamente semplice: è sufficiente aprire un terminale, spostarsi nella root directory del repository ed eseguire il comando \verb|docker compose up -d|. Il compose file è strutturato in modo da creare automaticamente le immagini e avviare tutti i servizi.
+
+È inoltre possibile caricare dei dati di esempio eseguendo il comando
+\begin{lstlisting}
+docker compose exec mongo mongorestore -d citybus 'mongodb://root:password@mongo:27017/citybus?authSource=admin&directConnection=true' /dump
+\end{lstlisting}
+Una volta caricati i dati, sarà possibile eseguire il login con un utente di amministrazione appositamente creato; l'email per l'autenticazione è \verb|admin@citybus.com| e la password è \verb|admin|.

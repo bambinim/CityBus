@@ -1,0 +1,37 @@
+\section{Test}
+
+Le funzionalità del sistema sono state testate approfonditamente dal team su vari browser moderni (Google Chrome, Microsoft Edge, Mozilla Firefox, Safari), con l’obiettivo di verificarne il corretto funzionamento, la portabilità e la coerenza visuale in contesti differenti. In particolare, è stata posta attenzione all’interazione utente nelle schermate di ricerca partenze, monitoraggio corse e creazione/modifica delle linee, che rappresentano le aree a maggior complessità interattiva.
+
+Anche le API REST sviluppate lato server sono state verificate tramite strumenti di test manuali e automatizzati, garantendone l’accurata restituzione dei dati relativi a fermate, linee e orari in tempo reale.
+
+Per una valutazione qualitativa dell’esperienza utente, il sistema è stato sottoposto al test di usabilità secondo le 10 euristiche di Nielsen. Da questa analisi sono emerse le seguenti considerazioni:
+\begin{itemize}
+    \item \textbf{Controllo e libertà:} sono state introdotte funzionalità per permettere all’utente di tornare sui propri passi (es. pulsanti “Indietro” tra gli step di creazione linea) e di correggere eventuali errori nei campi obbligatori, con validazioni visive attive. È stato inoltre previsto un meccanismo di guida progressiva step-by-step.
+    \item \textbf{Aiuto utente:} nelle schermate più complesse (come la creazione della linea o la pagina di monitoraggio delle linee) sono stati aggiunti messaggi esplicativi e tooltip per spiegare le funzionalità. In caso di errore, vengono mostrate label o messaggi mirati (es. campo obbligatorio non compilato o formato errato).
+    \item \textbf{Prevenzione errori:} il sistema impedisce all’utente di procedere con l’inserimento incompleto dei dati. Le azioni sono guidate da input validati, messaggi contestuali e feedback visivi costanti.
+    \item \textbf{Riconoscimento più che ricordo:} l’utente non è costretto a ricordare nomi o riferimenti. Ad esempio, grazie all’autocompletamento per le fermate e all’uso di label intuitive nei percorsi, l’interazione si basa su selezione e riconoscimento immediato.
+    \item \textbf{Visibilità dello stato del sistema:}  l’interfaccia comunica in modo chiaro lo stato corrente dell’interazione, come il passo del processo attualmente attivo o la posizione del bus nella timeline. In alcune pagine, i dati si aggiornano dinamicamente per riflettere lo stato in tempo reale.
+    \item \textbf{Corrispondenza tra sistema e mondo reale:} l’interfaccia adotta terminologie e concetti familiari all’utente (es. “fermata”, “linea”, “orario”), facilitando la comprensione senza richiedere formazione. Sono state aggiunte anche icone visive per rafforzare il messaggio semantico.
+    \item \textbf{Coerenza e standard:} l’intero sistema adotta uno stile visivo coerente, con componenti UI standardizzati, colori uniformi e pattern ripetuti. Le azioni comuni (modifica, salvataggio, eliminazione) sono riconoscibili in tutte le schermate.
+    \item \textbf{Estetica e progettazione minimalista:} ogni schermata offre solo gli elementi essenziali per completare l’azione richiesta, evitando sovraccarico cognitivo. Lo spazio è utilizzato in modo bilanciato sia su desktop che mobile, garantendo chiarezza e ordine.
+    \item \textbf{Flessibilità ed efficienza:} sebbene il sistema sia pensato per essere semplice e intuitivo, sono stati previsti comportamenti rapidi come l’aggiunta di fermate con un click e il riutilizzo di dati esistenti per semplificare operazioni ripetitive.
+    \item \textbf{Aiuto e documentazione}: è stato integrato un sistema minimo di supporto utente tramite messaggi contestuali, tooltip e piccole guide inline nei punti critici del flusso. Vista la semplicità d’uso, si è ritenuto non necessario includere una guida esterna completa, privilegiando un design autoesplicativo.
+\end{itemize}
+
+Una volta completato lo sviluppo delle funzionalità e l’implementazione dell’interfaccia, il sistema è stato sottoposto all’attenzione delle due principali tipologie di utenti coinvolte: l’utente generico (passeggero) e l’amministratore del sistema (gestore delle linee).
+Questa fase ha permesso di valutare la correttezza dell’utilizzo del sistema da entrambe le prospettive, verificando che i flussi previsti risultassero comprensibili, intuitivi ed efficienti.
+
+Nella fase finale, tutti i componenti del team si sono immedesimati nei target user individuati durante l’analisi, simulando casi d’uso realistici. Sono stati testati scenari tipici (es. consultazione partenze, simulazione corsa, modifica di una linea) e situazioni limite (es. ricerca incompleta, input errati, utilizzo su schermi mobili).
+Questa attività ha confermato la robustezza, chiarezza e coerenza dell’interfaccia, oltre alla capacità del sistema di guidare l’utente nella risoluzione autonoma di eventuali errori.
+
+
+
+
+
+
+
+
+
+
+
+
