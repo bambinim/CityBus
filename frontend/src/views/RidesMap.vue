@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { LMap, LTileLayer, LControlZoom, LMarker, LIcon, LPopup } from "@vue-leaflet/vue-leaflet";
-import { faEye, faEyeSlash, faArrowRightArrowLeft, faBus, faRoute, faClock, faChevronUp, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEyeSlash, faArrowRightArrowLeft, faBus, faRoute, faClock, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { BusRideService } from '@/service/BusRideService';
 import { WebSocket } from '@/lib/websocket'
 
@@ -11,7 +11,6 @@ const selectButtonOptions = ref([
     { name: 'Solo Ritardi', value: 1 }
 ])
 
-const isExpanded = ref(false)
 const rideToFollow = ref(null)
 const cardInfo = ref({})
 const mapCenter = ref([44.136352, 12.242244])
@@ -147,7 +146,6 @@ watch(ridesPositions, (newRidesPosition) => {
     const rides = newRidesPosition.find(ride => ride.id.toString() === rideToFollow.value.key)
     mapCenter.value = [rides.position[1], 
                         rides.position[0]];
-    mapZoom.value = 16;
     linesNodes.value.filter(line => {
         return line.children.map(dir => {
             return dir.children.map(ride => {
@@ -164,6 +162,14 @@ watch(ridesPositions, (newRidesPosition) => {
     })
 });
 
+const setRideToFollowFromMapClick = (rideId) => {
+    const time = new Date(rides.value.filter(r => r.id == rideId)[0].scheduledDepartureTimestamp)
+    rideToFollow.value = {
+        key: rideId,
+        minutesLate: realTimeData.value[rideId].minutesLate,
+        label: `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`,
+    }
+}
 
 </script>
 <template>
@@ -177,30 +183,25 @@ watch(ridesPositions, (newRidesPosition) => {
                     layer-type="base"
                     name="OpenStreetMap"
                 ></l-tile-layer>
-                <l-marker v-for="(ride, idx) in ridesPositions"
-                :lat-lng="{lng: ride.position[0], lat: ride.position[1]}" >
-                    <l-icon :iconSize="[0, 0]" :iconAnchor="[10, 10]">
-                        <div class="rounded-full inline-flex justify-center items-center"  style="padding: 4px 8px; background-color: blue;">
-                            <span style="color: white;">{{ ride.line }}</span>
-                        </div>
+                <l-marker v-for="(ride, _) in ridesPositions"
+                    :lat-lng="{lng: ride.position[0], lat: ride.position[1]}"
+                    @click="_ => setRideToFollowFromMapClick(ride.id)">
+                    <l-icon :iconSize="[0, 0]" :iconAnchor="[8, 8]">
+                        <div v-if="rideToFollow && rideToFollow.key == ride.id" class="rounded-full" style="padding: 8px 8px; background-color: red;"></div>
+                        <div v-else class="rounded-full" style="padding: 8px 8px; background-color: blue;"></div>
                     </l-icon>
                 </l-marker>
-                <div class="absolute top-2 right-2 z-[1000]">
-                    <Card @mouseenter="isExpanded = true" @mouseleave="isExpanded = false">
+                <div v-if="rideToFollow" class="absolute top-2 right-2 z-[1000]">
+                    <Card>
                         <template #title>
                             <div class="flex justify-between items-center cursor-pointer">
-                                <font-awesome-icon :icon="faBus" class="text-blue-500 text-lg" />
-                                <span class="text-lg font-semibold text-gray-800">{{cardInfo.direction}}</span>
-                                <font-awesome-icon :icon="isExpanded ? faChevronUp : faChevronDown" class="text-gray-600 cursor-pointer"/>
-                            </div>
-                        </template>
-                        <template #subtitle>
-                            <div class="rounded-lg text-white bg-blue-500 mr-2 text-center">
-                                {{ cardInfo.line }}
+                                <span class="text-lg text-gray-800">{{ cardInfo.line }}</span>
+                                <font-awesome-icon :icon="faArrowRight" class="text-lg text-gray-800 mx-2" />
+                                <span class="text-lg font-semibold text-gray-800">{{ cardInfo.direction }}</span>
                             </div>
                         </template>
                         <template #content>
-                            <div v-if="isExpanded">
+                            <div>
                                 <div class="mt-1 text-gray-500 text-sm">
                                     Orario di partenza: <span class="font-semibold text-gray-700">{{cardInfo.departureTime}}</span>
                                 </div>
@@ -212,6 +213,8 @@ watch(ridesPositions, (newRidesPosition) => {
                                 class="mt-2 w-full"
                                 icon="pi pi-times"
                                 label="Interrompi monitoraggio"
+                                variant="text"
+                                severity="danger"
                                 @click="rideToFollow = null; cardInfo = {}"
                             />
                         </template>
@@ -238,7 +241,12 @@ watch(ridesPositions, (newRidesPosition) => {
             <Tree class="w-full" :value="linesNodes"
                 v-model:expanded-keys="expandedKeys">
                 <template #nodeicon="scope">
-                    <font-awesome-icon :icon="scope.node.icon" @click="_ => rideToFollow = scope.node"/>
+                    <Button v-if="!scope.node.children" rounded variant="text" aria-label="Monitora corsa" @click="_ => rideToFollow = scope.node">
+                        <template #icon>
+                            <font-awesome-icon :icon="scope.node.icon" />
+                        </template>
+                    </Button>
+                    <font-awesome-icon v-else :icon="scope.node.icon" />
                 </template>
                 <template #default="scope">
                     <div class="flex flex-row items-center justify-between w-full">
