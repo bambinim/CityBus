@@ -809,6 +809,12 @@ paths:
             type: number
           required: true
           description: Departure timestamp
+        - in: query
+          name: line
+          schema:
+            type: string
+          required: false
+          description: Line id filter
       responses:
         '200':
           description: List of busses departing from specified stop at specified time 

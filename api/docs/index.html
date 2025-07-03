@@ -1163,7 +1163,7 @@ ul.nav-tabs {
       "type" : "number"
     },
     "line" : {
-      "$ref" : "#/components/schemas/_lines_get_200_response_inner"
+      "$ref" : "#/components/schemas/LineDirection"
     }
   }
 };
@@ -1486,7 +1486,7 @@ ul.nav-tabs {
         </div>
         <div id="header">
           <div id="api-_">
-            <h2 id="welcome-to-apidoc">API Documentation</h2>
+            <h2 id="welcome-to-apidoc">API and SDK Documentation</h2>
               <div class="app-desc"></div>
             <hr>
             <div id="app-description" class="app-desc">
@@ -9211,7 +9211,7 @@ $(document).ready(function() {
                             <pre class="prettyprint"><code class="language-bsh">curl -X GET \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "http://127.0.0.1:3001/stops/{busStopId}/departures?departure_timestamp=8.14"
+ "http://127.0.0.1:3001/stops/{busStopId}/departures?departure_timestamp=8.14&line=line_example"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Busstop-stopsBusStopIdDeparturesGet-0-java">
@@ -9235,9 +9235,10 @@ public class BusstopApiExample {
         BusstopApi apiInstance = new BusstopApi();
         String busStopId = busStopId_example; // String | Id of the bus stop
         BigDecimal departureTimestamp = 8.14; // BigDecimal | Departure timestamp
+        String line = line_example; // String | Line id filter
 
         try {
-            array[_stops__busStopId__departures_get_200_response_inner] result = apiInstance.stopsBusStopIdDeparturesGet(busStopId, departureTimestamp);
+            array[_stops__busStopId__departures_get_200_response_inner] result = apiInstance.stopsBusStopIdDeparturesGet(busStopId, departureTimestamp, line);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling BusstopApi#stopsBusStopIdDeparturesGet");
@@ -9255,9 +9256,10 @@ final api_instance = DefaultApi();
 
 final String busStopId = new String(); // String | Id of the bus stop
 final BigDecimal departureTimestamp = new BigDecimal(); // BigDecimal | Departure timestamp
+final String line = new String(); // String | Line id filter
 
 try {
-    final result = await api_instance.stopsBusStopIdDeparturesGet(busStopId, departureTimestamp);
+    final result = await api_instance.stopsBusStopIdDeparturesGet(busStopId, departureTimestamp, line);
     print(result);
 } catch (e) {
     print('Exception when calling DefaultApi->stopsBusStopIdDeparturesGet: $e\n');
@@ -9274,9 +9276,10 @@ public class BusstopApiExample {
         BusstopApi apiInstance = new BusstopApi();
         String busStopId = busStopId_example; // String | Id of the bus stop
         BigDecimal departureTimestamp = 8.14; // BigDecimal | Departure timestamp
+        String line = line_example; // String | Line id filter
 
         try {
-            array[_stops__busStopId__departures_get_200_response_inner] result = apiInstance.stopsBusStopIdDeparturesGet(busStopId, departureTimestamp);
+            array[_stops__busStopId__departures_get_200_response_inner] result = apiInstance.stopsBusStopIdDeparturesGet(busStopId, departureTimestamp, line);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling BusstopApi#stopsBusStopIdDeparturesGet");
@@ -9299,10 +9302,12 @@ public class BusstopApiExample {
 BusstopApi *apiInstance = [[BusstopApi alloc] init];
 String *busStopId = busStopId_example; // Id of the bus stop (default to null)
 BigDecimal *departureTimestamp = 8.14; // Departure timestamp (default to null)
+String *line = line_example; // Line id filter (optional) (default to null)
 
 // List rides departing from specified bus stop
 [apiInstance stopsBusStopIdDeparturesGetWith:busStopId
     departureTimestamp:departureTimestamp
+    line:line
               completionHandler: ^(array[_stops__busStopId__departures_get_200_response_inner] output, NSError* error) {
     if (output) {
         NSLog(@"%@", output);
@@ -9326,6 +9331,9 @@ BearerAuth.accessToken = "YOUR ACCESS TOKEN";
 var api = new CityBusApi.BusstopApi()
 var busStopId = busStopId_example; // {String} Id of the bus stop
 var departureTimestamp = 8.14; // {BigDecimal} Departure timestamp
+var opts = {
+  'line': line_example // {String} Line id filter
+};
 
 var callback = function(error, data, response) {
   if (error) {
@@ -9334,7 +9342,7 @@ var callback = function(error, data, response) {
     console.log('API called successfully. Returned data: ' + data);
   }
 };
-api.stopsBusStopIdDeparturesGet(busStopId, departureTimestamp, callback);
+api.stopsBusStopIdDeparturesGet(busStopId, departureTimestamp, opts, callback);
 </code></pre>
                             </div>
 
@@ -9361,10 +9369,11 @@ namespace Example
             var apiInstance = new BusstopApi();
             var busStopId = busStopId_example;  // String | Id of the bus stop (default to null)
             var departureTimestamp = 8.14;  // BigDecimal | Departure timestamp (default to null)
+            var line = line_example;  // String | Line id filter (optional)  (default to null)
 
             try {
                 // List rides departing from specified bus stop
-                array[_stops__busStopId__departures_get_200_response_inner] result = apiInstance.stopsBusStopIdDeparturesGet(busStopId, departureTimestamp);
+                array[_stops__busStopId__departures_get_200_response_inner] result = apiInstance.stopsBusStopIdDeparturesGet(busStopId, departureTimestamp, line);
                 Debug.WriteLine(result);
             } catch (Exception e) {
                 Debug.Print("Exception when calling BusstopApi.stopsBusStopIdDeparturesGet: " + e.Message );
@@ -9386,9 +9395,10 @@ OpenAPITools\Client\Configuration::getDefaultConfiguration()->setAccessToken('',
 $api_instance = new OpenAPITools\Client\Api\BusstopApi();
 $busStopId = busStopId_example; // String | Id of the bus stop
 $departureTimestamp = 8.14; // BigDecimal | Departure timestamp
+$line = line_example; // String | Line id filter
 
 try {
-    $result = $api_instance->stopsBusStopIdDeparturesGet($busStopId, $departureTimestamp);
+    $result = $api_instance->stopsBusStopIdDeparturesGet($busStopId, $departureTimestamp, $line);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling BusstopApi->stopsBusStopIdDeparturesGet: ', $e->getMessage(), PHP_EOL;
@@ -9408,9 +9418,10 @@ $WWW::OPenAPIClient::Configuration::access_token = 'YOUR_ACCESS_TOKEN';
 my $api_instance = WWW::OPenAPIClient::BusstopApi->new();
 my $busStopId = busStopId_example; # String | Id of the bus stop
 my $departureTimestamp = 8.14; # BigDecimal | Departure timestamp
+my $line = line_example; # String | Line id filter
 
 eval {
-    my $result = $api_instance->stopsBusStopIdDeparturesGet(busStopId => $busStopId, departureTimestamp => $departureTimestamp);
+    my $result = $api_instance->stopsBusStopIdDeparturesGet(busStopId => $busStopId, departureTimestamp => $departureTimestamp, line => $line);
     print Dumper($result);
 };
 if ($@) {
@@ -9432,10 +9443,11 @@ openapi_client.configuration.access_token = 'YOUR_ACCESS_TOKEN'
 api_instance = openapi_client.BusstopApi()
 busStopId = busStopId_example # String | Id of the bus stop (default to null)
 departureTimestamp = 8.14 # BigDecimal | Departure timestamp (default to null)
+line = line_example # String | Line id filter (optional) (default to null)
 
 try:
     # List rides departing from specified bus stop
-    api_response = api_instance.stops_bus_stop_id_departures_get(busStopId, departureTimestamp)
+    api_response = api_instance.stops_bus_stop_id_departures_get(busStopId, departureTimestamp, line=line)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling BusstopApi->stopsBusStopIdDeparturesGet: %s\n" % e)</code></pre>
@@ -9447,9 +9459,10 @@ except ApiException as e:
 pub fn main() {
     let busStopId = busStopId_example; // String
     let departureTimestamp = 8.14; // BigDecimal
+    let line = line_example; // String
 
     let mut context = BusstopApi::Context::default();
-    let result = client.stopsBusStopIdDeparturesGet(busStopId, departureTimestamp, &context).wait();
+    let result = client.stopsBusStopIdDeparturesGet(busStopId, departureTimestamp, line, &context).wait();
 
     println!("{:?}", result);
 }
@@ -9522,6 +9535,26 @@ Departure timestamp
                 <div class="inner required">
                     Required
                 </div>
+        </div>
+    </div>
+</td>
+</tr>
+
+                                <tr><td style="width:150px;">line</td>
+<td>
+
+
+    <div id="d2e199_stopsBusStopIdDeparturesGet_line">
+        <div class="json-schema-view">
+            <div class="primitive">
+                <span class="type">
+                    String
+                </span>
+
+                    <div class="inner description marked">
+Line id filter
+                    </div>
+            </div>
         </div>
     </div>
 </td>
