@@ -27,7 +27,6 @@ module.exports = {
                     send403Response(res);
                     return
                 }
-                console.log(decoded)
                 req.userId = decoded.userId;
             } catch (error) {
                 send401Response(res);

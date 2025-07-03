@@ -3,15 +3,19 @@ services:
   frontend:
     build:
       dockerfile: Dockerfile.frontend
+    restart: unless-stopped
     ports:
       - 8080:80
 
   api:
     build:
       dockerfile: Dockerfile.api
+    restart: unless-stopped
     environment:
       MONGODB_URL: mongodb://root:password@mongo:27017/citybus?authSource=admin&directConnection=true
-      LOGGING_LEVEL: INFO
+      LOGGING_LEVEL: DEBUG
+      NODE_DEBUG: http2
+      DEBUG: socket.io:server
       REDIS_URL: redis://redis:6379
 
   mongo:
@@ -23,6 +27,7 @@ services:
     volumes:
       - ./mongo:/bitnami/mongodb
       - ./mongo-scripts/init.sh:/docker-entrypoint-initdb.d/01-init.sh
+      - ./deployment_configs/dump:/dump
     environment:
       MONGODB_REPLICA_SET_MODE: primary
       MONGODB_REPLICA_SET_NAME: rsCitybus

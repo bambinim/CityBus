@@ -6,5 +6,6 @@ RUN npm install
 
 ENV NODE_ENV=production
 ENV LISTEN_PORT=80
+ENV WS_ENDPOINT=http://127.0.0.1:80
 
 ENTRYPOINT [ "npm", "start" ]
