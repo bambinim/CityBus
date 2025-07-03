@@ -6,39 +6,49 @@
       <div class="md:basis-1/4 mb-2 md:me-2 flex flex-col md:h-full w-full overflow-y-auto h-1/2">
         <div v-if="pathFiltered" class="text-end">
           <Button icon="pi pi-times" severity="danger" variant="text" rounded aria-label="Chiudi percorso" @click="() => pathFiltered = undefined" />
-          <Timeline :value="pathFiltered.legs" align="alternate" class="customized-timeline">
+          <Timeline :value="pathFiltered.legs" class="customized-timeline">
             <template #marker="slotProps">
               <div :style="{ backgroundColor: slotProps.index == pathFiltered.legs.length - 1 ? 'red' : (slotProps.item.type == 'bus' ? 'dodgerblue' : 'orange') }" class="rounded-full">
-                <font-awesome-icon class="md:fa-2xl fa-md p-2" :icon="slotProps.index == pathFiltered.legs.length - 1 ? faBullseye : (slotProps.item.type == 'bus' ? faBus : faPersonWalking)" style="color: white;" />
+                <font-awesome-icon class="md:fa-2xl fa-sm p-2" :icon="slotProps.index == pathFiltered.legs.length - 1 ? faBullseye : (slotProps.item.type == 'bus' ? faBus : faPersonWalking)" style="color: white;" />
               </div>
             </template>
             <template #content="slotProps">
               <Card class="mt-4">
                 <template #title>
-                  {{ slotProps.item.type == 'bus' ? slotProps.item.stops[0].name : (slotProps.index == 0 ? 'La tua posizione' : pathFiltered.legs[pathFiltered.legs.length - 2].stops[1].name) }}
+                  <span class="md:text-2xl text-md">{{ slotProps.item.type == 'bus' ? slotProps.item.stops[0].name : (slotProps.index == 0 ? 'La tua posizione' : pathFiltered.legs[pathFiltered.legs.length - 2].stops[1].name) }}</span>
                 </template>
                 <template #subtitle>
-                  <div class="w-full grid grid-rows-3">
-                    <div v-if="slotProps.item.type == 'bus'" class="row-span-1">
-                      <span class="rounded-lg text-white text-center bg-blue-500 mr-2">{{ slotProps.item.line.name }}</span>
-                      <span class="font-bold md:text-xl text-md">{{ slotProps.item.line.direction.name }}</span>
+                  <div class="w-full grid grid-rows-1">
+                    <div v-if="slotProps.item.type == 'bus'" class="row-span-1 grid grid-rows-2">
+                      <div class="row-span-1">
+                        <span class="rounded-lg md:text-xl text-sm text-white text-center bg-blue-500 mr-2">{{ slotProps.item.line.name }}</span>
+                        <span class="font-bold md:text-xl text-sm">{{ slotProps.item.line.direction.name }}</span>
+                      </div>
+                      <div class="row-span-1">
+                        <span class="md:text-lg text-sm mr-2">Orario di partenza:</span>
+                        <span class="row-span-1 font-bold md:text-2xl text-md" :class="slotProps.index % 2 === 0 ? 'justify-self-start' : 'justify-self-end'">
+                          {{ getTimeFromTimestampWithOffset(slotProps.item.departureTimestamp) }}
+                        </span>
+                      </div>
                     </div>
-                    <div class="row-span-1">
-                      <span class="md:text-lg text-sm">Orario di partenza:</span>
+                    <div v-else>
+                      <div class="row-span-1">
+                        <span class="md:text-lg text-sm mr-2">Orario di partenza:</span>
+                        <span class="row-span-1 font-bold md:text-2xl text-md" :class="slotProps.index % 2 === 0 ? 'justify-self-start' : 'justify-self-end'">
+                          {{ getTimeFromTimestampWithOffset(slotProps.item.departureTimestamp) }}
+                        </span>
+                      </div>
                     </div>
-                    <span class="row-span-1 font-bold md:text-2xl text-lg" :class="slotProps.index % 2 === 0 ? 'justify-self-start' : 'justify-self-end'">
-                      {{ getTimeFromTimestampWithOffset(slotProps.item.departureTimestamp) }}
-                    </span>
                   </div>
                 </template>
                 <template #content>
                   <div v-if="slotProps.item.type == 'bus'">
-                    <p>Cambio bus alla fermata: <span class="font-bold">{{ slotProps.item.stops[1].name }}</span></p>
-                    <p>Arrivo previsto alla fermata: <span class="font-bold md:text-lg text-sm">{{ getTimeFromTimestampWithOffset(slotProps.item.arrivalTimestamp) }}</span></p>
+                    <p class="text-sm md:text-lg">Cambio bus alla fermata: <span class="font-bold text-sm md:text-lg">{{ slotProps.item.stops[1].name }}</span></p>
+                    <p class="text-sm md:text-lg">Arrivo previsto alla fermata: <span class="font-bold md:text-lg text-sm">{{ getTimeFromTimestampWithOffset(slotProps.item.arrivalTimestamp) }}</span></p>
                   </div>
                   <div v-else>
-                    <p>Proseguite a piedi fino a <span class="font-bold">{{ slotProps.index === 0 ? pathFiltered.legs[1].stops[0].name : 'Destinazione' }}</span></p>
-                    <p>Arrivo previsto: <span class="font-bold md:text-lg text-sm">{{ getTimeFromTimestampWithOffset(slotProps.item.arrivalTimestamp) }}</span></p>
+                    <p class="text-sm md:text-lg">Proseguite a piedi fino a <span class="font-bold text-sm md:text-lg">{{ slotProps.index === 0 ? pathFiltered.legs[1].stops[0].name : 'Destinazione' }}</span></p>
+                    <p class="text-sm md:text-lg">Arrivo previsto: <span class="font-bold text-sm md:text-lg">{{ getTimeFromTimestampWithOffset(slotProps.item.arrivalTimestamp) }}</span></p>
                   </div>
                 </template>
               </Card>
@@ -259,5 +269,19 @@ function updateArrival(latlng) {
 .custom-autocomplete .p-autocomplete {
   width: 100%;
   box-sizing: border-box;
+}
+
+::v-deep(.customized-timeline) {
+  .p-timeline-event:nth-child(even) {
+      flex-direction: row;
+
+      .p-timeline-event-content {
+          text-align: left;
+      }
+  }
+
+  .p-timeline-event-opposite {
+      flex: 0;
+  }
 }
 </style>
