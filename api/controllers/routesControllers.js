@@ -112,8 +112,6 @@ exports.getNavigationRoutes = async (req, res) => {
         return new Date(lastA.arrivalTime) - new Date(lastB.arrivalTime);
     });
 
-    console.log(paths[0])
-
     const departureTimestamp = new Date(paths[0][0].departureTime).getTime();
     const arrivalTimestamp = new Date(paths[0][paths[0].length - 1].arrivalTime).getTime();
     const totalDuration = (arrivalTimestamp - departureTimestamp) / 1000; 
@@ -202,8 +200,6 @@ exports.getNavigationRoutes = async (req, res) => {
         arrivalTimestamp: arrivalTimestamp,
         legs: legs
     }
-
-    json.legs.forEach(leg => console.log(leg.stops))
     
     res.json(json);
 }

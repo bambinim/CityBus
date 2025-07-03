@@ -7,7 +7,6 @@ export const BusRideService = {
         const {directionId, departureTime} = data
 
         let msg = '';
-        console.log(departureTime)
 
         try{
             const res = await requests.post(`/rides`,{ data: {

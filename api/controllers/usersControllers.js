@@ -33,7 +33,6 @@ exports.registerNewUser = async (req, res) => {
 exports.getUserInformation = async (req, res) => {
     try {
         const user = await User.findById(req.userId).select('-password -_id -__v');
-        console.log(user);
         if (!user) {
           return res.status(401).json({ message: 'User not found' });
         }

@@ -26,7 +26,6 @@ const closeInplace = (callback) => {
 const stopSelected = (callback) => {
     callback();
     emit('stop-selected', selectedStop.value)
-    console.log(selectedStop.value)
     selectedStop.value = undefined
 }
 

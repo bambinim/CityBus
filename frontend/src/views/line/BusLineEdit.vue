@@ -141,7 +141,6 @@ const saveBusLine = async () => {
             router.push({ path: '/lines/view' })
         }, 3000);
     } catch (err) {
-        console.log("ciao")
         toast.add({severity: 'error', summary: err, life: 3000 })
     }
 }
