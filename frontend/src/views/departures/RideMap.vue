@@ -7,21 +7,19 @@
                 layer-type="base"
                 name="OpenStreetMap"
             ></l-tile-layer>
-            <l-marker
+            <l-circle-marker
+                :radius="8"
                 :lat-lng="center"
-                :name="name">
-                <l-icon :iconSize="[0, 0]" :iconAnchor="[8, 8]">
-                    <div class="rounded-full inline-flex justify-center items-center"  style="padding: 8px; background-color: red;">
-                    </div>
-                </l-icon>
-            </l-marker>
+                :name="name"
+                :color="'red'">
+            </l-circle-marker>
         </l-map>
     </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { LMap, LTileLayer, LMarker, LPopup, LIcon, LPolyline, LControl, LControlZoom } from "@vue-leaflet/vue-leaflet";
+import { LMap, LTileLayer, LMarker, LPopup, LIcon, LCircleMarker, LPolyline, LControl, LControlZoom } from "@vue-leaflet/vue-leaflet";
 import { useBusRideStore } from '@/stores/ride'
 
 const busRideStore = useBusRideStore();

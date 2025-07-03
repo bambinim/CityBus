@@ -177,7 +177,6 @@ const loadOptions = async (event) => {
 const loadLines = async (event) => {
     try {
         lineOptions.value = await BusLineService.getBusLines({search: event.query})
-        console.log(lineOptions.value)
     } catch (err) {
         toast.add({severity: 'error', summary: err, life: 3000 })
     }
@@ -201,7 +200,6 @@ const viewDepartures = async () => {
     }
 
     const departureTimestamp = getTimeStampFromTime(dataPicker.value)
-    console.log(selectedLine.value)
     if(selectedLine.value){
         departures.value = await BusStopService.getDepartures({stopId: selectedStop.value.stopId, departureTimestamp: departureTimestamp, lineId: selectedLine.value.id})
     }else{

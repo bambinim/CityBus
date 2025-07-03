@@ -18,7 +18,6 @@ async function createSocket(namespace) {
 async function connectWebSocket(namespace) {
 
     if (socket && socket.connected) {
-        console.log("WebSocket già connesso!");
         return socket;
     }
 
@@ -26,12 +25,10 @@ async function connectWebSocket(namespace) {
 
     return new Promise((resolve, reject) => {
         socket.on("connect", () => {
-            console.log("WebSocket connesso:", socket.id);
             resolve(socket);
         });
 
         socket.on("connect_error", (err) => {
-            console.error("Errore di connessione WebSocket:", err.message);
             reject(err);
         });
     });
@@ -58,7 +55,6 @@ function onWebSocketMessage(event, callback) {
 function disconnectWebSocket() {
     if (socket) {
         socket.disconnect();
-        console.log("WebSocket disconnesso.");
     }
 }
 

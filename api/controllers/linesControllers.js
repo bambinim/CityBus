@@ -203,7 +203,6 @@ exports.getBusLines = async (req, res) => {
 exports.getBusLinesDetailed = async (req, res) => {
     try{
         const busLines = await BusLine.find().populate('directions')
-        console.log(busLines[0])
         const response = []
         busLines.map(line => {
             line.directions.map(direction => {

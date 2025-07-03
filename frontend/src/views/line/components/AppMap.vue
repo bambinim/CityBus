@@ -33,7 +33,6 @@
 
 
   async function handleMapClick(event){
-    console.log(props.currentStep)
     marker.value.latlng = event.latlng;
     popup.value.visible = true;
     marker.value.visible = true

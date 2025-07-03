@@ -172,7 +172,6 @@ async function getPath() {
       pathToFollow.value = null
     } else {
       pathToFollow.value = { ...path }
-      console.log("Path: ", pathToFollow)
       pathFiltered.value = computePath(path)
       toast.add({ severity: 'success', summary: 'Percorso trovato', life: 2000 })
     }
